@@ -16,8 +16,11 @@ holistique basés à Dakar.
 - **À faire** — gestion d'intentions avec priorités, filtres et barre de progression.
 - **Réglages** — 4 thèmes, 3 polices, rappel quotidien, verrouillage par code PIN, export JSON.
 
-> Note : les données sont conservées en mémoire pendant la session (état React) ;
-> il n'y a pas encore de persistance entre les visites.
+> **Persistance locale** : les entrées, tâches, le thème, la police, l'humeur du
+> jour et le code PIN sont sauvegardés dans le `localStorage` du navigateur, et
+> restaurés à la prochaine visite. Si un code PIN est défini, l'application
+> s'ouvre verrouillée. Les données restent sur l'appareil — rien n'est envoyé
+> vers un serveur.
 
 ## 🛠️ Stack technique
 

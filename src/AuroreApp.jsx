@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -64,6 +64,34 @@ const formatDate = (ds) => {
   const days = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
   return `${days[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`;
 };
+
+// ─── PERSISTENCE ──────────────────────────────────────────────────────────────
+
+const STORAGE_PREFIX = "aurore:";
+
+// Read a persisted value once, falling back to `fallback` if absent/invalid.
+const readStored = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + key);
+    return raw != null ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+// useState that mirrors its value to localStorage (gracefully no-ops if storage
+// is unavailable, e.g. private browsing).
+function usePersistentState(key, initial) {
+  const [state, setState] = useState(() => readStored(key, initial));
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(state));
+    } catch {
+      /* storage full or disabled — keep working in-memory */
+    }
+  }, [key, state]);
+  return [state, setState];
+}
 
 // ─── SHARED COMPONENTS ───────────────────────────────────────────────────────
 
@@ -889,14 +917,15 @@ function SettingsPage({ th, themeIdx, setThemeIdx, fontIdx, setFontIdx, entries,
 export default function AuroreApp() {
   const [splash, setSplash] = useState(true);
   const [page, setPage] = useState("home");
-  const [themeIdx, setThemeIdx] = useState(0);
-  const [fontIdx, setFontIdx] = useState(0);
-  const [entries, setEntries] = useState(SAMPLE_ENTRIES);
-  const [tasks, setTasks] = useState(SAMPLE_TASKS);
-  const [currentMood, setCurrentMood] = useState(4);
+  const [themeIdx, setThemeIdx] = usePersistentState("themeIdx", 0);
+  const [fontIdx, setFontIdx] = usePersistentState("fontIdx", 0);
+  const [entries, setEntries] = usePersistentState("entries", SAMPLE_ENTRIES);
+  const [tasks, setTasks] = usePersistentState("tasks", SAMPLE_TASKS);
+  const [currentMood, setCurrentMood] = usePersistentState("currentMood", 4);
   const [showNew, setShowNew] = useState(false);
-  const [locked, setLocked] = useState(false);
-  const [pin, setPin] = useState("");
+  const [pin, setPin] = usePersistentState("pin", "");
+  // If a PIN was set in a previous session, open the app locked.
+  const [locked, setLocked] = useState(() => !!readStored("pin", ""));
   const [pinError, setPinError] = useState(false);
 
   const th = THEMES[themeIdx];
