@@ -9,12 +9,17 @@ holistique basés à Dakar.
 
 ## ✨ Fonctionnalités
 
+- **Bilingue Français / Wolof** — bascule de toute l'interface depuis les Réglages.
+  *(La traduction wolof est une première version à faire relire — voir
+  [`docs/TRADUCTION-WOLOF.md`](docs/TRADUCTION-WOLOF.md).)*
 - **Accueil** — humeur du jour, affirmation quotidienne, semaine en humeurs et statistiques.
-- **Journal intime** — écriture de moments avec humeur, heure et emojis ; export `.txt`.
+- **Journal intime** — écriture de moments avec humeur, heure, emojis et **photo / création** ;
+  **timeline intra-journée** (plusieurs humeurs dans la journée) ; **recherche par date ou mot-clé** ; export `.txt`.
 - **Calendrier émotionnel** — vue mensuelle des humeurs et bilan du mois.
-- **Mur Polaroid** — tes moments en polaroids inclinés.
+- **Mur Polaroid** — tes moments (et tes photos) en polaroids inclinés.
 - **À faire** — gestion d'intentions avec priorités, filtres et barre de progression.
-- **Réglages** — 4 thèmes, 3 polices, rappel quotidien, verrouillage par code PIN, export JSON.
+- **Rappels** — notifications du navigateur, quotidiennes (à une heure choisie) ou horaires.
+- **Réglages** — langue, 4 thèmes, 3 polices, rappels, verrouillage par code PIN, export JSON.
 
 > **Persistance locale** : les entrées, tâches, le thème, la police, l'humeur du
 > jour et le code PIN sont sauvegardés dans le `localStorage` du navigateur, et

@@ -84,6 +84,8 @@ const STRINGS = {
     photo_label: "Photo / création",
     add_photo: "Ajouter une photo",
     remove_photo: "Retirer",
+    timeline_label: "Au fil de la journée",
+    timeline_hint: "Note ton humeur à différents moments",
     save: "SAUVEGARDER",
     journal_empty: "Ton journal t'attend. Commence à écrire.",
     search_label: "Rechercher",
@@ -168,6 +170,8 @@ const STRINGS = {
     photo_label: "Nataal / liggéey",
     add_photo: "Yokk nataal",
     remove_photo: "Dindi",
+    timeline_label: "Yoonu bés bi",
+    timeline_hint: "Bind sa xel ci jamono yu wuute",
     save: "DENC",
     journal_empty: "Sa téere mu ngi lay xaar. Tàmbalee bind.",
     search_label: "Wut",
@@ -247,7 +251,7 @@ const QUOTES = {
 };
 
 const SAMPLE_ENTRIES = [
-  { id:1, date:"2025-06-22", time:"08:30", text:"Belle journée productive. Mon projet prend forme et je suis fière du chemin parcouru. Aurore the club m'a vraiment aidée à me recentrer sur l'essentiel.", mood:5, emojis:["✨","💪"] },
+  { id:1, date:"2025-06-22", time:"08:30", text:"Belle journée productive. Mon projet prend forme et je suis fière du chemin parcouru. Aurore the club m'a vraiment aidée à me recentrer sur l'essentiel.", mood:5, emojis:["✨","💪"], timeline:[{time:"08:00",mood:3},{time:"12:30",mood:4},{time:"18:00",mood:5}] },
   { id:2, date:"2025-06-21", time:"21:15", text:"Un peu de mélancolie ce soir. Mais la pluie sur Dakar a quelque chose de poétique. Je me suis assise près de la fenêtre et j'ai réfléchi longuement.", mood:2, emojis:["🌧️","🫖"] },
   { id:3, date:"2025-06-19", time:"10:00", text:"Atelier créatif ce matin. J'ai retrouvé cette joie d'enfant quand on crée sans raison. Peinture, musique, rires — exactement ce dont j'avais besoin.", mood:4, emojis:["🎨","💛"] },
   { id:4, date:"2025-06-17", time:"19:45", text:"Journée neutre. Ni haute ni basse, juste présente. Et parfois, la présence c'est déjà beaucoup.", mood:3, emojis:["🌿"] },
@@ -346,6 +350,32 @@ function MoodOrb({ mood, size = 100, animated = true }) {
       flexShrink: 0,
     }}>
       {m.e}
+    </div>
+  );
+}
+
+// Horizontal mood timeline for a single day (read-only display).
+function MoodTimeline({ timeline, th }) {
+  if (!timeline || timeline.length === 0) return null;
+  const pts = [...timeline].sort((a, b) => a.time.localeCompare(b.time));
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", marginTop: 12, overflowX: "auto", paddingBottom: 2 }}>
+      {pts.map((p, i) => {
+        const m = getMood(p.mood);
+        return (
+          <div key={i} style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 42 }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: "50%",
+                background: m.c + "44", border: `2px solid ${m.c}`,
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
+              }}>{m.e}</div>
+              <span style={{ fontSize: 9, color: th.muted }}>{p.time}</span>
+            </div>
+            {i < pts.length - 1 && <div style={{ width: 16, height: 2, background: th.border, marginTop: 12 }} />}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -593,7 +623,13 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
   const [photoBusy, setPhotoBusy] = useState(false);
   const fileRef = useRef(null);
   const now = new Date();
-  const [time, setTime] = useState(`${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`);
+  const nowHHMM = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  const [time, setTime] = useState(nowHHMM);
+
+  // Intra-day mood timeline (for the entry being written)
+  const [timeline, setTimeline] = useState([]);
+  const [tlTime, setTlTime] = useState(nowHHMM);
+  const [tlMood, setTlMood] = useState(3);
 
   // Search by date + keyword
   const [searchDate, setSearchDate] = useState("");
@@ -612,11 +648,20 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
     finally { setPhotoBusy(false); if (fileRef.current) fileRef.current.value = ""; }
   };
 
-  const resetForm = () => { setText(""); setSelEmojis([]); setMood(4); setPhoto(null); };
+  const addTl = () => {
+    if (!tlTime) return;
+    setTimeline(prev => [...prev, { time: tlTime, mood: tlMood }].sort((a, b) => a.time.localeCompare(b.time)));
+  };
+  const removeTl = (i) => setTimeline(prev => prev.filter((_, idx) => idx !== i));
+
+  const resetForm = () => { setText(""); setSelEmojis([]); setMood(4); setPhoto(null); setTimeline([]); };
 
   const save = () => {
     if (!text.trim() && !photo) return;
-    setEntries(prev => [{ id: Date.now(), date: todayStr(), time, text: text.trim(), mood, emojis: selEmojis, photo }, ...prev]);
+    setEntries(prev => [{
+      id: Date.now(), date: todayStr(), time, text: text.trim(), mood, emojis: selEmojis, photo,
+      ...(timeline.length ? { timeline } : {}),
+    }, ...prev]);
     resetForm(); setShowNew(false);
   };
 
@@ -743,6 +788,43 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
               }}>{photoBusy ? "…" : `📷 ${t("add_photo")}`}</button>
             )}
 
+            {/* Intra-day mood timeline */}
+            <Label th={th}>{t("timeline_label")}</Label>
+            <p style={{ color: th.muted, fontSize: 11, margin: "-4px 0 10px" }}>{t("timeline_hint")}</p>
+            {timeline.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                {[...timeline].sort((a, b) => a.time.localeCompare(b.time)).map((p, i) => (
+                  <span key={i} style={{
+                    display: "flex", alignItems: "center", gap: 5,
+                    background: th.bg, border: `1px solid ${th.border}`, borderRadius: 20,
+                    padding: "4px 6px 4px 9px", fontSize: 12, color: th.text,
+                  }}>
+                    <span>{getMood(p.mood).e}</span><span>{p.time}</span>
+                    <button onClick={() => removeTl(i)} style={{ background: "none", border: "none", color: th.faint, cursor: "pointer", fontSize: 15, lineHeight: 1 }}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 24 }}>
+              <input type="time" value={tlTime} onChange={e => setTlTime(e.target.value)} style={{
+                background: th.bg, border: `1px solid ${th.border}`, borderRadius: 8,
+                padding: "7px 8px", color: th.text, fontSize: 13, colorScheme: "dark",
+              }} />
+              <div style={{ display: "flex", gap: 3, flex: 1 }}>
+                {MOODS.map(m => (
+                  <button key={m.v} onClick={() => setTlMood(m.v)} style={{
+                    flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 16, cursor: "pointer",
+                    background: tlMood === m.v ? m.c + "44" : th.bg,
+                    border: `1px solid ${tlMood === m.v ? m.c : th.border}`,
+                  }}>{m.e}</button>
+                ))}
+              </div>
+              <button onClick={addTl} style={{
+                background: th.accent, border: "none", borderRadius: 8,
+                padding: "7px 12px", color: "#000", fontSize: 16, cursor: "pointer",
+              }}>+</button>
+            </div>
+
             <Label th={th}>{t("emojis_label")} ({selEmojis.length}/5)</Label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
               {EMOJIS.map(e => (
@@ -802,6 +884,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
             )}
             {e.text && <p style={{ color: th.text, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{e.text}</p>}
             {e.emojis.length > 0 && <p style={{ margin: "10px 0 0", fontSize: 18 }}>{e.emojis.join(" ")}</p>}
+            <MoodTimeline timeline={e.timeline} th={th} />
           </Card>,
         ].filter(Boolean);
       }, [])}
