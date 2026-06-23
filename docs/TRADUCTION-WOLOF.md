@@ -27,6 +27,7 @@
 | Accueil | Kër | |
 | Journal | Surnaal | |
 | Calendrier | Arminaat | |
+| Carte | Kàrt | |
 | Polaroid | Polaroid | |
 | À faire | Liggéey | |
 | Réglages | Tànneef | |
@@ -104,6 +105,23 @@
 | Mur Polaroid | Miiru Polaroid | |
 | Tes moments suspendus dans le temps | Sa saa yi ci jamono ji | |
 | Tes polaroids t'attendent. Commence à écrire. | Sa polaroid yi ñu ngi lay xaar. Tàmbalee bind. | |
+
+## 8b. Carte AURORE & lieux
+
+| Français | Wolof |
+|---|---|---|
+| Carte AURORE | Kàrtu AURORE | |
+| Retrace les lieux de ton parcours | Wéyal bérab yi nga jaar | |
+| Aucun lieu encore. Ajoute une position à tes moments. | Amul bérab ba leegi. Yokk sa bérab ci sa saa yi. | |
+| Lieu | Bérab | |
+| Touche la carte ou utilise ta position | Laalal kàrt bi walla jëfandikoo sa bérab | |
+| Ajouter un lieu | Yokk bérab | |
+| Nom du lieu (optionnel) | Turu bérab bi (su soobee) | |
+| 📍 Ma position | 📍 Sama bérab | |
+| Retirer le lieu | Dindi bérab bi | |
+| Géolocalisation non supportée | Géolocalisation amul | |
+| Position indisponible ou refusée | Bérab bi amul walla ñu ko bañ | |
+| lieux *(décompte)* | bérab | |
 
 ## 9. À faire (tâches)
 

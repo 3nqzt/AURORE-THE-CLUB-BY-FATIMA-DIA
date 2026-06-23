@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -61,7 +63,20 @@ const STRINGS = {
     lock_wrong: "Code incorrect — réessaie",
 
     nav_home: "Accueil", nav_journal: "Journal", nav_calendar: "Calendrier",
-    nav_wall: "Polaroid", nav_tasks: "À faire", nav_settings: "Réglages",
+    nav_map: "Carte", nav_wall: "Polaroid", nav_tasks: "À faire", nav_settings: "Réglages",
+
+    map_title: "Carte AURORE",
+    map_sub: "Retrace les lieux de ton parcours",
+    map_empty: "Aucun lieu encore. Ajoute une position à tes moments.",
+    location_label: "Lieu",
+    location_hint: "Touche la carte ou utilise ta position",
+    add_location: "Ajouter un lieu",
+    location_name_ph: "Nom du lieu (optionnel)",
+    use_my_location: "📍 Ma position",
+    location_remove: "Retirer le lieu",
+    geo_unsupported: "Géolocalisation non supportée",
+    geo_denied: "Position indisponible ou refusée",
+    places_word: "lieux",
 
     mood_1: "Triste", mood_2: "Mélancolique", mood_3: "Neutre", mood_4: "Joyeux(se)", mood_5: "Radieux(se)",
 
@@ -147,7 +162,20 @@ const STRINGS = {
     lock_wrong: "Caabi bi baaxul — jéemaat",
 
     nav_home: "Kër", nav_journal: "Téere", nav_calendar: "Arminaat",
-    nav_wall: "Polaroid", nav_tasks: "Liggéey", nav_settings: "Tànneef",
+    nav_map: "Kàrt", nav_wall: "Polaroid", nav_tasks: "Liggéey", nav_settings: "Tànneef",
+
+    map_title: "Kàrtu AURORE",
+    map_sub: "Wéyal bérab yi nga jaar",
+    map_empty: "Amul bérab ba leegi. Yokk sa bérab ci sa saa yi.",
+    location_label: "Bérab",
+    location_hint: "Laalal kàrt bi walla jëfandikoo sa bérab",
+    add_location: "Yokk bérab",
+    location_name_ph: "Turu bérab bi (su soobee)",
+    use_my_location: "📍 Sama bérab",
+    location_remove: "Dindi bérab bi",
+    geo_unsupported: "Géolocalisation amul",
+    geo_denied: "Bérab bi amul walla ñu ko bañ",
+    places_word: "bérab",
 
     mood_1: "Naqar", mood_2: "Jaxle", mood_3: "Ci digg", mood_4: "Bég", mood_5: "Melax",
 
@@ -251,12 +279,12 @@ const QUOTES = {
 };
 
 const SAMPLE_ENTRIES = [
-  { id:1, date:"2025-06-22", time:"08:30", text:"Belle journée productive. Mon projet prend forme et je suis fière du chemin parcouru. Aurore the club m'a vraiment aidée à me recentrer sur l'essentiel.", mood:5, emojis:["✨","💪"], timeline:[{time:"08:00",mood:3},{time:"12:30",mood:4},{time:"18:00",mood:5}] },
-  { id:2, date:"2025-06-21", time:"21:15", text:"Un peu de mélancolie ce soir. Mais la pluie sur Dakar a quelque chose de poétique. Je me suis assise près de la fenêtre et j'ai réfléchi longuement.", mood:2, emojis:["🌧️","🫖"] },
-  { id:3, date:"2025-06-19", time:"10:00", text:"Atelier créatif ce matin. J'ai retrouvé cette joie d'enfant quand on crée sans raison. Peinture, musique, rires — exactement ce dont j'avais besoin.", mood:4, emojis:["🎨","💛"] },
+  { id:1, date:"2025-06-22", time:"08:30", text:"Belle journée productive. Mon projet prend forme et je suis fière du chemin parcouru. Aurore the club m'a vraiment aidée à me recentrer sur l'essentiel.", mood:5, emojis:["✨","💪"], timeline:[{time:"08:00",mood:3},{time:"12:30",mood:4},{time:"18:00",mood:5}], place:{lat:14.6708,lng:-17.4381,label:"Place de l'Indépendance, Plateau"} },
+  { id:2, date:"2025-06-21", time:"21:15", text:"Un peu de mélancolie ce soir. Mais la pluie sur Dakar a quelque chose de poétique. Je me suis assise près de la fenêtre et j'ai réfléchi longuement.", mood:2, emojis:["🌧️","🫖"], place:{lat:14.6900,lng:-17.4620,label:"Corniche Ouest"} },
+  { id:3, date:"2025-06-19", time:"10:00", text:"Atelier créatif ce matin. J'ai retrouvé cette joie d'enfant quand on crée sans raison. Peinture, musique, rires — exactement ce dont j'avais besoin.", mood:4, emojis:["🎨","💛"], place:{lat:14.6831,lng:-17.4631,label:"UCAD, Dakar"} },
   { id:4, date:"2025-06-17", time:"19:45", text:"Journée neutre. Ni haute ni basse, juste présente. Et parfois, la présence c'est déjà beaucoup.", mood:3, emojis:["🌿"] },
-  { id:5, date:"2025-06-15", time:"07:00", text:"Le picnic du club hier soir était magique. Ces personnes me donnent de l'énergie et me rappellent pourquoi je veux grandir.", mood:5, emojis:["🌴","🌸","🫶"] },
-  { id:6, date:"2025-06-12", time:"22:00", text:"Fatiguée mais en paix. J'ai lu 30 pages, médité 10 minutes. Petites victoires.", mood:3, emojis:["📚","🌙"] },
+  { id:5, date:"2025-06-15", time:"07:00", text:"Le picnic du club hier soir était magique. Ces personnes me donnent de l'énergie et me rappellent pourquoi je veux grandir.", mood:5, emojis:["🌴","🌸","🫶"], place:{lat:14.7497,lng:-17.5136,label:"Plage des Almadies"} },
+  { id:6, date:"2025-06-12", time:"22:00", text:"Fatiguée mais en paix. J'ai lu 30 pages, médité 10 minutes. Petites victoires.", mood:3, emojis:["📚","🌙"], place:{lat:14.7167,lng:-17.4877,label:"Ouakam"} },
 ];
 
 const SAMPLE_TASKS = [
@@ -280,6 +308,20 @@ const makeT = (lang) => (key) => {
   const table = STRINGS[lang] || STRINGS.fr;
   return table[key] != null ? table[key] : (STRINGS.fr[key] != null ? STRINGS.fr[key] : key);
 };
+const escapeHtml = (s = "") => s.replace(/[&<>"']/g, c => (
+  { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+));
+
+// Default centre of the map: Dakar, Senegal.
+const DAKAR = [14.6928, -17.4467];
+
+// Teardrop Leaflet marker carrying a mood colour + emoji (avoids the broken
+// default-icon-path issue with bundlers, since we render our own HTML).
+const makePinIcon = (color, emoji) => L.divIcon({
+  className: "aurore-pin",
+  html: `<div style="width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px;line-height:1">${emoji}</span></div>`,
+  iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30],
+});
 // Count + word, e.g. "3 entrées" / "3 mbind".
 const countLabel = (n, lang, t) =>
   lang === "fr" ? `${n} ${n > 1 ? t("entries_word") : t("entry_word")}` : `${n} ${t("entries_word")}`;
@@ -411,6 +453,41 @@ function Btn({ children, onClick, variant = "primary", th, style = {} }) {
     ghost:     { ...base, background: "transparent", border: `1px solid ${th.border}`, color: th.muted },
   };
   return <button onClick={onClick} style={styles[variant]}>{children}</button>;
+}
+
+// Small interactive map to pick one location for a journal entry.
+// Tap the map (or drag the pin) to set coordinates; reports them via onChange.
+function LocationPicker({ value, onChange, th }) {
+  const elRef = useRef(null);
+  const markerRef = useRef(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    const hasVal = value && value.lat != null;
+    const map = L.map(elRef.current, { scrollWheelZoom: false })
+      .setView(hasVal ? [value.lat, value.lng] : DAKAR, hasVal ? 14 : 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: "© OpenStreetMap",
+    }).addTo(map);
+
+    const place = (lat, lng) => {
+      if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
+      else {
+        markerRef.current = L.marker([lat, lng], { draggable: true, icon: makePinIcon(th.accent, "📍") })
+          .addTo(map)
+          .on("dragend", (e) => { const ll = e.target.getLatLng(); onChangeRef.current({ lat: ll.lat, lng: ll.lng }); });
+      }
+    };
+    if (hasVal) place(value.lat, value.lng);
+    map.on("click", (e) => { place(e.latlng.lat, e.latlng.lng); onChangeRef.current({ lat: e.latlng.lat, lng: e.latlng.lng }); });
+
+    const sizer = setTimeout(() => map.invalidateSize(), 60);
+    return () => { clearTimeout(sizer); map.remove(); markerRef.current = null; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <div ref={elRef} style={{ height: 190, borderRadius: 12, overflow: "hidden", border: `1px solid ${th.border}`, marginBottom: 10 }} />;
 }
 
 // ─── SPLASH SCREEN ───────────────────────────────────────────────────────────
@@ -631,6 +708,12 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
   const [tlTime, setTlTime] = useState(nowHHMM);
   const [tlMood, setTlMood] = useState(3);
 
+  // Location for this entry
+  const [place, setPlace] = useState(null);
+  const [showLoc, setShowLoc] = useState(false);
+  const [locKey, setLocKey] = useState(0); // bump to re-centre the picker
+  const [geoErr, setGeoErr] = useState("");
+
   // Search by date + keyword
   const [searchDate, setSearchDate] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -654,13 +737,24 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
   };
   const removeTl = (i) => setTimeline(prev => prev.filter((_, idx) => idx !== i));
 
-  const resetForm = () => { setText(""); setSelEmojis([]); setMood(4); setPhoto(null); setTimeline([]); };
+  const useMyLocation = () => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) { setGeoErr(t("geo_unsupported")); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setPlace(p => ({ ...(p || {}), lat: pos.coords.latitude, lng: pos.coords.longitude })); setShowLoc(true); setLocKey(k => k + 1); setGeoErr(""); },
+      () => setGeoErr(t("geo_denied")),
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  };
+  const removeLocation = () => { setPlace(null); setShowLoc(false); setGeoErr(""); };
+
+  const resetForm = () => { setText(""); setSelEmojis([]); setMood(4); setPhoto(null); setTimeline([]); removeLocation(); };
 
   const save = () => {
     if (!text.trim() && !photo) return;
     setEntries(prev => [{
       id: Date.now(), date: todayStr(), time, text: text.trim(), mood, emojis: selEmojis, photo,
       ...(timeline.length ? { timeline } : {}),
+      ...(place && place.lat != null ? { place } : {}),
     }, ...prev]);
     resetForm(); setShowNew(false);
   };
@@ -786,6 +880,37 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
                 borderRadius: 12, padding: "16px", color: th.muted, fontSize: 13,
                 cursor: "pointer", marginBottom: 20,
               }}>{photoBusy ? "…" : `📷 ${t("add_photo")}`}</button>
+            )}
+
+            {/* Location */}
+            <Label th={th}>{t("location_label")}</Label>
+            {!showLoc && (!place || place.lat == null) ? (
+              <button onClick={() => setShowLoc(true)} style={{
+                width: "100%", background: th.bg, border: `1px dashed ${th.border}`,
+                borderRadius: 12, padding: "16px", color: th.muted, fontSize: 13,
+                cursor: "pointer", marginBottom: 20,
+              }}>📍 {t("add_location")}</button>
+            ) : (
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ color: th.muted, fontSize: 11, margin: "-4px 0 8px" }}>{t("location_hint")}</p>
+                <LocationPicker key={locKey} value={place} th={th}
+                  onChange={(c) => setPlace(p => ({ ...(p || {}), lat: c.lat, lng: c.lng }))} />
+                <input
+                  value={place?.label || ""}
+                  onChange={e => setPlace(p => ({ ...(p || {}), label: e.target.value }))}
+                  placeholder={t("location_name_ph")}
+                  style={{
+                    width: "100%", background: th.bg, border: `1px solid ${th.border}`,
+                    borderRadius: 8, padding: "9px 12px", color: th.text, fontSize: 13,
+                    boxSizing: "border-box", fontFamily: ff, marginBottom: 8,
+                  }}
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <Btn onClick={useMyLocation} variant="ghost" th={th} style={{ fontSize: 11, padding: "8px 12px", fontWeight: 400 }}>{t("use_my_location")}</Btn>
+                  <Btn onClick={removeLocation} variant="ghost" th={th} style={{ fontSize: 11, padding: "8px 12px", fontWeight: 400 }}>{t("location_remove")}</Btn>
+                </div>
+                {geoErr && <p style={{ color: "#E05050", fontSize: 11, margin: "8px 0 0" }}>{geoErr}</p>}
+              </div>
             )}
 
             {/* Intra-day mood timeline */}
@@ -1045,6 +1170,64 @@ function PolaroidPage({ entries, th, ff, lang, t }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── MAP PAGE ────────────────────────────────────────────────────────────────
+
+function MapPage({ entries, th, ff, lang, t }) {
+  const elRef = useRef(null);
+  const placed = entries.filter(e => e.place && e.place.lat != null);
+
+  useEffect(() => {
+    if (!elRef.current) return;
+    const map = L.map(elRef.current).setView(DAKAR, 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: "© OpenStreetMap",
+    }).addTo(map);
+
+    // Oldest → newest, so the connecting line traces the journey in order.
+    const sorted = [...placed].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    const latlngs = [];
+    sorted.forEach(e => {
+      const m = getMood(e.mood);
+      const mk = L.marker([e.place.lat, e.place.lng], { icon: makePinIcon(m.c, m.e) }).addTo(map);
+      const name = e.place.label ? `<b>${escapeHtml(e.place.label)}</b><br>` : "";
+      const snippet = escapeHtml((e.text || "").slice(0, 90));
+      mk.bindPopup(`${name}<span style="opacity:.7">${formatDate(e.date, lang)} · ${e.time}</span><br>${snippet}`);
+      latlngs.push([e.place.lat, e.place.lng]);
+    });
+    if (latlngs.length > 1) {
+      L.polyline(latlngs, { color: th.accent, weight: 2, dashArray: "5,7", opacity: 0.75 }).addTo(map);
+    }
+    if (latlngs.length) map.fitBounds(latlngs, { padding: [40, 40], maxZoom: 15 });
+
+    const sizer = setTimeout(() => map.invalidateSize(), 60);
+    return () => { clearTimeout(sizer); map.remove(); };
+  }, [entries, lang, th.accent]);
+
+  return (
+    <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
+      <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
+        {t("map_title")} ✦
+      </h2>
+      <p style={{ color: th.muted, fontSize: 13, margin: "0 0 16px" }}>{t("map_sub")}</p>
+
+      {placed.length === 0 && (
+        <Card th={th} style={{ textAlign: "center", padding: 24, marginBottom: 14 }}>
+          <p style={{ fontSize: 30, margin: "0 0 10px" }}>🗺️</p>
+          <p style={{ color: th.muted, fontSize: 14, margin: 0 }}>{t("map_empty")}</p>
+        </Card>
+      )}
+
+      <div ref={elRef} style={{ height: 440, borderRadius: 16, overflow: "hidden", border: `1px solid ${th.border}` }} />
+
+      {placed.length > 0 && (
+        <p style={{ color: th.muted, fontSize: 11, margin: "12px 2px 0" }}>
+          {placed.length} {t("places_word")}
+        </p>
+      )}
     </div>
   );
 }
@@ -1477,6 +1660,7 @@ export default function AuroreApp() {
     { id: "home",     icon: "☀️", label: t("nav_home")     },
     { id: "journal",  icon: "📖", label: t("nav_journal")  },
     { id: "calendar", icon: "🗓",  label: t("nav_calendar") },
+    { id: "map",      icon: "🗺",  label: t("nav_map")      },
     { id: "wall",     icon: "🌅", label: t("nav_wall")     },
     { id: "tasks",    icon: "✓",  label: t("nav_tasks")    },
     { id: "settings", icon: "⚙",  label: t("nav_settings") },
@@ -1502,6 +1686,7 @@ export default function AuroreApp() {
             />
           )}
           {page === "calendar" && <CalendarPage entries={entries} th={th} ff={ff} lang={lang} t={t} />}
+          {page === "map"      && <MapPage entries={entries} th={th} ff={ff} lang={lang} t={t} />}
           {page === "wall"     && <PolaroidPage entries={entries} th={th} ff={ff} lang={lang} t={t} />}
           {page === "tasks"    && <TasksPage tasks={tasks} setTasks={setTasks} th={th} ff={ff} lang={lang} t={t} />}
           {page === "settings" && (

@@ -16,6 +16,8 @@ holistique basés à Dakar.
 - **Journal intime** — écriture de moments avec humeur, heure, emojis et **photo / création** ;
   **timeline intra-journée** (plusieurs humeurs dans la journée) ; **recherche par date ou mot-clé** ; export `.txt`.
 - **Calendrier émotionnel** — vue mensuelle des humeurs et bilan du mois.
+- **Carte AURORE** — situe tes moments sur une carte de Dakar (Leaflet / OpenStreetMap)
+  et retrace ton parcours dans le temps.
 - **Mur Polaroid** — tes moments (et tes photos) en polaroids inclinés.
 - **À faire** — gestion d'intentions avec priorités, filtres et barre de progression.
 - **Rappels** — notifications du navigateur, quotidiennes (à une heure choisie) ou horaires.
@@ -31,7 +33,8 @@ holistique basés à Dakar.
 
 - [React 18](https://react.dev/)
 - [Vite 5](https://vitejs.dev/)
-- Styles en ligne (inline styles) — aucune dépendance CSS externe.
+- [Leaflet](https://leafletjs.com/) + tuiles [OpenStreetMap](https://www.openstreetmap.org/) pour la carte (sans clé API).
+- Styles en ligne (inline styles) pour l'interface.
 
 ## 🚀 Démarrage local
 
