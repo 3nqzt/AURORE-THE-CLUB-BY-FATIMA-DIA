@@ -13,10 +13,14 @@ const MOODS = [
 ];
 
 const THEMES = [
-  { name:"Aurore",     bg:"#0D0B0E", surface:"#1A1614", border:"#2A2420", accent:"#C4813A", accentSoft:"#E8B89A", text:"#F5EDE3", muted:"#9E8E7E", faint:"#3A302C" },
-  { name:"Crépuscule", bg:"#12091E", surface:"#1E1030", border:"#2E1E44", accent:"#9B59B6", accentSoft:"#D7A4E8", text:"#F0E8F8", muted:"#9A80B0", faint:"#3A2050" },
-  { name:"Sahara",     bg:"#16100A", surface:"#221808", border:"#332204", accent:"#D4A017", accentSoft:"#F0CB6A", text:"#FFF8E7", muted:"#A08840", faint:"#5A4510" },
-  { name:"Lagon",      bg:"#030D18", surface:"#071825", border:"#0E2A3C", accent:"#2E86AB", accentSoft:"#7ACCE0", text:"#E0F4FA", muted:"#5A8EA0", faint:"#0E3A50" },
+  // Sunset over Dakar — warm coral on deep warm-charcoal.
+  { name:"Aurore",     bg:"#0E0A09", surface:"#1B1512", border:"#2C221C", accent:"#E0764A", accentSoft:"#F2B488", text:"#F7EEE4", muted:"#AB9786", faint:"#3A2C24" },
+  // Blue hour — twilight rose over indigo night (the cabana at dusk).
+  { name:"Crépuscule", bg:"#0C0A16", surface:"#171228", border:"#26203E", accent:"#CE6F94", accentSoft:"#EBAAC6", text:"#F1E8F3", muted:"#9C88A8", faint:"#2C2348" },
+  // Sahara — warm sand and gold.
+  { name:"Sahara",     bg:"#13100A", surface:"#211A0F", border:"#352A14", accent:"#D9A441", accentSoft:"#F0CE84", text:"#FBF3E2", muted:"#A89360", faint:"#4A3A16" },
+  // Lagon — ocean teal under a warm sky.
+  { name:"Lagon",      bg:"#04111B", surface:"#0A2130", border:"#143447", accent:"#2E9BB5", accentSoft:"#86D2E0", text:"#E3F3F8", muted:"#6F9AAB", faint:"#103447" },
 ];
 
 const FONTS = [
@@ -24,6 +28,10 @@ const FONTS = [
   { name:"Sans",   family:"system-ui, sans-serif" },
   { name:"Mono",   family:"'Courier New', monospace" },
 ];
+
+// Editorial display serif for the AURORE wordmark & headings (loaded in
+// index.html). Falls back to Georgia, then a generic serif.
+const HEAD_FONT = "'Fraunces', Georgia, serif";
 
 const EMOJIS = ["✨","💪","🌙","🌊","🎨","📚","🌸","💛","🫶","🌿","☀️","🌧️","🫖","🎵","💭","🔥","🌺","🦋","🌴","🎯"];
 
@@ -455,6 +463,14 @@ function Btn({ children, onClick, variant = "primary", th, style = {} }) {
   return <button onClick={onClick} style={styles[variant]}>{children}</button>;
 }
 
+// Soft sunset/horizon glow rendered behind the app — evokes a Dakar sunset.
+function SunsetGlow({ th, variant = "ambient" }) {
+  const bg = variant === "splash"
+    ? `radial-gradient(85% 46% at 50% 45%, ${th.accent}55, ${th.accent}14 38%, transparent 64%)`
+    : `radial-gradient(140% 52% at 50% -8%, ${th.accent}2E, ${th.accent}0A 42%, transparent 70%)`;
+  return <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: bg }} />;
+}
+
 // Small interactive map to pick one location for a journal entry.
 // Tap the map (or drag the pin) to set coordinates; reports them via onChange.
 function LocationPicker({ value, onChange, th }) {
@@ -495,21 +511,29 @@ function LocationPicker({ value, onChange, th }) {
 function SplashScreen({ th, t }) {
   return (
     <div style={{
-      minHeight: "100vh", background: th.bg,
+      minHeight: "100vh", background: th.bg, position: "relative", overflow: "hidden",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
       animation: "splashFade 2.5s ease-in-out",
     }}>
-      <MoodOrb mood={4} size={130} animated={true} />
-      <div style={{ textAlign: "center", marginTop: 32 }}>
-        <p style={{ color: th.accent, fontFamily: "Georgia, serif", fontSize: 30, letterSpacing: 6, margin: "0 0 4px", fontWeight: 700 }}>
-          AURORE
+      <SunsetGlow th={th} variant="splash" />
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <MoodOrb mood={4} size={130} animated={true} />
+        {/* horizon line under the "sun" */}
+        <div style={{
+          width: 200, height: 1, marginTop: 26,
+          background: `linear-gradient(90deg, transparent, ${th.accentSoft}88, transparent)`,
+        }} />
+        <div style={{ textAlign: "center", marginTop: 26 }}>
+          <p style={{ color: th.accent, fontFamily: HEAD_FONT, fontSize: 34, letterSpacing: 8, margin: "0 0 4px", fontWeight: 600 }}>
+            AURORE
+          </p>
+          <p style={{ color: th.muted, fontSize: 11, letterSpacing: 5, margin: 0 }}>{t("club")}</p>
+        </div>
+        <p style={{ color: th.faint, fontSize: 12, marginTop: 44, letterSpacing: 2, fontStyle: "italic" }}>
+          {t("loading")}
         </p>
-        <p style={{ color: th.muted, fontSize: 11, letterSpacing: 5, margin: 0 }}>{t("club")}</p>
       </div>
-      <p style={{ color: th.faint, fontSize: 12, marginTop: 48, letterSpacing: 2, fontStyle: "italic" }}>
-        {t("loading")}
-      </p>
     </div>
   );
 }
@@ -530,7 +554,7 @@ function LockScreen({ onUnlock, error, th, t }) {
       alignItems: "center", justifyContent: "center",
       padding: 32, fontFamily: "inherit",
     }}>
-      <p style={{ color: th.accent, fontFamily: "Georgia, serif", fontSize: 22, letterSpacing: 4, margin: "0 0 4px" }}>AURORE</p>
+      <p style={{ color: th.accent, fontFamily: HEAD_FONT, fontSize: 22, letterSpacing: 4, margin: "0 0 4px" }}>AURORE</p>
       <p style={{ color: th.muted, fontSize: 10, letterSpacing: 4, margin: "0 0 40px" }}>{t("club")}</p>
       <MoodOrb mood={4} size={72} animated={true} />
       <p style={{ color: error ? "#E05050" : th.muted, fontSize: 13, margin: "28px 0 16px", transition: "color 0.2s" }}>
@@ -584,15 +608,16 @@ function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood
           <p style={{ color: th.muted, fontSize: 10, letterSpacing: 3, margin: "0 0 3px" }}>
             {headerWeekday} · {new Date().getDate()} {MONTHS[new Date().getMonth()].toUpperCase()}
           </p>
-          <h1 style={{ color: th.accent, fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 700, letterSpacing: 3, margin: 0 }}>
+          <h1 style={{ color: th.accent, fontFamily: HEAD_FONT, fontSize: 26, fontWeight: 700, letterSpacing: 3, margin: 0 }}>
             AURORE
           </h1>
           <p style={{ color: th.muted, fontSize: 9, letterSpacing: 5, margin: "2px 0 0" }}>{t("club")}</p>
         </div>
         <button onClick={onNewEntry} style={{
-          width: 48, height: 48, borderRadius: "50%", background: th.accent,
+          width: 48, height: 48, borderRadius: "50%",
+          background: `linear-gradient(140deg, ${th.accentSoft}, ${th.accent})`,
           border: "none", color: "#fff", fontSize: 22, cursor: "pointer",
-          boxShadow: `0 4px 24px ${th.accent}66`,
+          boxShadow: `0 6px 26px ${th.accent}66`,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>+</button>
       </div>
@@ -621,7 +646,7 @@ function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood
       {/* Quote */}
       <Card th={th} style={{ marginBottom: 14, borderLeft: `3px solid ${th.accent}`, paddingLeft: 16 }}>
         <Label th={th}>{t("home_affirmation")}</Label>
-        <p style={{ color: th.text, fontSize: 14, fontStyle: "italic", lineHeight: 1.7, margin: 0, fontFamily: "Georgia, serif" }}>
+        <p style={{ color: th.text, fontSize: 14, fontStyle: "italic", lineHeight: 1.7, margin: 0, fontFamily: HEAD_FONT }}>
           "{quote}"
         </p>
       </Card>
@@ -779,7 +804,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
         <div>
-          <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: 0 }}>{t("journal_title")}</h2>
+          <h2 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 22, fontWeight: 700, margin: 0 }}>{t("journal_title")}</h2>
           <p style={{ color: th.muted, fontSize: 12, margin: "4px 0 0" }}>{countLabel(entries.length, lang, t)}</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -826,7 +851,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
             border: `1px solid ${th.border}`,
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-              <h3 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 18, margin: 0 }}>{t("new_moment")}</h3>
+              <h3 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 18, margin: 0 }}>{t("new_moment")}</h3>
               <button onClick={() => { resetForm(); setShowNew(false); }} style={{ background: "none", border: "none", color: th.muted, fontSize: 22, cursor: "pointer" }}>✕</button>
             </div>
 
@@ -963,8 +988,9 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
             </div>
 
             <button onClick={save} style={{
-              width: "100%", background: th.accent, border: "none", borderRadius: 14,
-              padding: 15, color: "#000", fontSize: 15, fontWeight: 700,
+              width: "100%", background: `linear-gradient(135deg, ${th.accentSoft}, ${th.accent})`,
+              border: "none", borderRadius: 14,
+              padding: 15, color: "#1A1207", fontSize: 15, fontWeight: 700,
               cursor: "pointer", letterSpacing: 1,
             }}>
               {t("save")} ✦
@@ -1042,7 +1068,7 @@ function CalendarPage({ entries, th, ff, lang, t }) {
 
   return (
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
-      <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: "0 0 20px" }}>
+      <h2 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 22, fontWeight: 700, margin: "0 0 20px" }}>
         {t("cal_title")}
       </h2>
 
@@ -1118,7 +1144,7 @@ function PolaroidPage({ entries, th, ff, lang, t }) {
   const angles = [-2, 1.5, -1.2, 2.2, -1.8, 1, -2.5, 0.8];
   return (
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
-      <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
+      <h2 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
         {t("wall_title")} ✦
       </h2>
       <p style={{ color: th.muted, fontSize: 13, margin: "0 0 22px" }}>{t("wall_sub")}</p>
@@ -1159,7 +1185,7 @@ function PolaroidPage({ entries, th, ff, lang, t }) {
               )}
               <p style={{
                 color: "#2A1810", fontSize: 10, lineHeight: 1.45,
-                margin: "0 0 6px", fontFamily: "Georgia, serif",
+                margin: "0 0 6px", fontFamily: HEAD_FONT,
               }}>
                 {e.text ? (e.text.length > 60 ? e.text.slice(0, 60) + "…" : e.text) : `${m.e} ${t(`mood_${e.mood}`)}`}
               </p>
@@ -1209,7 +1235,7 @@ function MapPage({ entries, th, ff, lang, t }) {
 
   return (
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
-      <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
+      <h2 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
         {t("map_title")} ✦
       </h2>
       <p style={{ color: th.muted, fontSize: 13, margin: "0 0 16px" }}>{t("map_sub")}</p>
@@ -1262,7 +1288,7 @@ function TasksPage({ tasks, setTasks, th, ff, lang, t }) {
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
-          <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: 0 }}>{t("tasks_title")}</h2>
+          <h2 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 22, fontWeight: 700, margin: 0 }}>{t("tasks_title")}</h2>
           <p style={{ color: th.muted, fontSize: 12, margin: "4px 0 0" }}>{pending} {t("tasks_pending")}</p>
         </div>
         <div style={{ textAlign: "right" }}>
@@ -1399,7 +1425,7 @@ function SettingsPage({
 
   return (
     <div style={{ padding: "24px 18px 110px", fontFamily: "inherit" }}>
-      <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: "0 0 24px" }}>
+      <h2 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 22, fontWeight: 700, margin: "0 0 24px" }}>
         {t("settings_title")}
       </h2>
 
@@ -1555,7 +1581,7 @@ function SettingsPage({
 
       {/* Branding */}
       <div style={{ textAlign: "center", paddingTop: 10 }}>
-        <p style={{ color: th.accent, fontFamily: "Georgia, serif", fontSize: 16, letterSpacing: 5, margin: "0 0 4px" }}>AURORE</p>
+        <p style={{ color: th.accent, fontFamily: HEAD_FONT, fontSize: 16, letterSpacing: 5, margin: "0 0 4px" }}>AURORE</p>
         <p style={{ color: th.muted, fontSize: 10, letterSpacing: 4, margin: "0 0 8px" }}>{t("club")} · v1.0</p>
         <p style={{ color: th.faint, fontSize: 10, margin: 0 }}>
           {t("project_credit")}
@@ -1572,7 +1598,7 @@ export default function AuroreApp() {
   const [page, setPage] = useState("home");
   const [lang, setLang] = usePersistentState("lang", "fr");
   const [themeIdx, setThemeIdx] = usePersistentState("themeIdx", 0);
-  const [fontIdx, setFontIdx] = usePersistentState("fontIdx", 0);
+  const [fontIdx, setFontIdx] = usePersistentState("fontIdx", 1);
   const [entries, setEntries] = usePersistentState("entries", SAMPLE_ENTRIES);
   const [tasks, setTasks] = usePersistentState("tasks", SAMPLE_TASKS);
   const [currentMood, setCurrentMood] = usePersistentState("currentMood", 4);
@@ -1667,10 +1693,11 @@ export default function AuroreApp() {
   ];
 
   return (
-    <div style={{ background: th.bg, minHeight: "100vh", fontFamily: ff, color: th.text }}>
+    <div style={{ background: th.bg, minHeight: "100vh", fontFamily: ff, color: th.text, position: "relative" }}>
       <style>{baseStyles}</style>
+      <SunsetGlow th={th} />
 
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
         <div key={page + lang} style={{ animation: "fadeIn 0.3s ease" }}>
           {page === "home" && (
             <HomePage
@@ -1728,8 +1755,8 @@ export default function AuroreApp() {
               {active && (
                 <div style={{
                   position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)",
-                  width: 20, height: 2, borderRadius: 1,
-                  background: th.accent,
+                  width: 22, height: 2, borderRadius: 1,
+                  background: `linear-gradient(90deg, ${th.accentSoft}, ${th.accent})`,
                 }} />
               )}
               <span style={{ fontSize: active ? 22 : 19, transition: "font-size 0.2s" }}>{n.icon}</span>

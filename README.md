@@ -29,6 +29,21 @@ holistique basés à Dakar.
 > s'ouvre verrouillée. Les données restent sur l'appareil — rien n'est envoyé
 > vers un serveur.
 
+## 🎨 Direction artistique
+
+L'esthétique s'inspire des **couchers de soleil de Dakar** et de la vie au bord
+de l'océan : tons corail et pêche chauds, bleus profonds de la mer, blush et
+sable. L'identité reste **minimaliste, jeune et lumineuse**.
+
+- **Palette** — noir chaud `#0E0A09`, corail `#E0764A`, pêche/blush `#F2B488`,
+  blanc chaud `#F7EEE4` ; 3 variations d'ambiance (Crépuscule, Sahara, Lagon).
+- **Signature** — l'orbe lumineux (soleil/lune) qui change de couleur selon
+  l'humeur, posé sur une ligne d'horizon à l'ouverture.
+- **Lueur de coucher de soleil** — un dégradé doux et discret en haut de
+  l'écran, rappelant l'horizon, derrière chaque page.
+- **Typographie** — *Fraunces* (serif éditorial) pour les titres et le logotype,
+  police système épurée pour le corps du texte.
+
 ## 🛠️ Stack technique
 
 - [React 18](https://react.dev/)
