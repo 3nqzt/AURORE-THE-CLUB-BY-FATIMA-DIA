@@ -21,11 +21,13 @@ const THEMES = [
   { name:"Sahara",     bg:"#13100A", surface:"#211A0F", border:"#352A14", accent:"#D9A441", accentSoft:"#F0CE84", text:"#FBF3E2", muted:"#A89360", faint:"#4A3A16" },
   // Lagon — ocean teal under a warm sky.
   { name:"Lagon",      bg:"#04111B", surface:"#0A2130", border:"#143447", accent:"#2E9BB5", accentSoft:"#86D2E0", text:"#E3F3F8", muted:"#6F9AAB", faint:"#103447" },
+  // Plein jour — light, warm daytime (golden hour on sand). The only light theme.
+  { name:"Plein jour", light:true, bg:"#FBF3E9", surface:"#FFFFFF", border:"#ECDDC9", accent:"#CC5E2A", accentSoft:"#EFAD7A", text:"#2B1E14", muted:"#8A7560", faint:"#E0CDB6" },
 ];
 
 const FONTS = [
   { name:"Sérif",  family:"Georgia, serif" },
-  { name:"Sans",   family:"system-ui, sans-serif" },
+  { name:"Inter",  family:"'Inter', system-ui, sans-serif" },
   { name:"Mono",   family:"'Courier New', monospace" },
 ];
 
@@ -161,7 +163,7 @@ const STRINGS = {
     export_journal_header: "AURORE THE CLUB — Mon Journal",
     project_credit: "Projet de Marketing Digital",
 
-    theme_0: "Aurore", theme_1: "Crépuscule", theme_2: "Sahara", theme_3: "Lagon",
+    theme_0: "Aurore", theme_1: "Crépuscule", theme_2: "Sahara", theme_3: "Lagon", theme_4: "Plein jour",
   },
   wo: {
     club: "THE CLUB",
@@ -260,7 +262,7 @@ const STRINGS = {
     export_journal_header: "AURORE THE CLUB — Sama joural",
     project_credit: "Liggéeyu Marketing Digital",
 
-    theme_0: "Njël", theme_1: "Timis", theme_2: "Sahara", theme_3: "Géej",
+    theme_0: "Njël", theme_1: "Timis", theme_2: "Sahara", theme_3: "Géej", theme_4: "Bëccëg",
   },
 };
 
@@ -819,7 +821,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
           <span style={{ fontSize: 16 }}>🔍</span>
           <input type="date" value={searchDate} onChange={e => setSearchDate(e.target.value)} style={{
             background: th.bg, border: `1px solid ${th.border}`, borderRadius: 8,
-            padding: "8px 10px", color: th.text, fontSize: 13, colorScheme: "dark",
+            padding: "8px 10px", color: th.text, fontSize: 13, colorScheme: th.light ? "light" : "dark",
           }} />
           <input
             value={searchText} onChange={e => setSearchText(e.target.value)}
@@ -871,7 +873,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
             <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{
               width: "100%", background: th.bg, border: `1px solid ${th.border}`,
               borderRadius: 8, padding: "10px 14px", color: th.text, fontSize: 14,
-              marginBottom: 18, boxSizing: "border-box", colorScheme: "dark",
+              marginBottom: 18, boxSizing: "border-box", colorScheme: th.light ? "light" : "dark",
             }} />
 
             <Label th={th}>{t("my_moment")}</Label>
@@ -958,7 +960,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
             <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 24 }}>
               <input type="time" value={tlTime} onChange={e => setTlTime(e.target.value)} style={{
                 background: th.bg, border: `1px solid ${th.border}`, borderRadius: 8,
-                padding: "7px 8px", color: th.text, fontSize: 13, colorScheme: "dark",
+                padding: "7px 8px", color: th.text, fontSize: 13, colorScheme: th.light ? "light" : "dark",
               }} />
               <div style={{ display: "flex", gap: 3, flex: 1 }}>
                 {MOODS.map(m => (
@@ -1521,7 +1523,7 @@ function SettingsPage({
               <input type="time" value={reminderTime} onChange={e => { setReminderTime(e.target.value); showSaved(); }} style={{
                 width: "100%", background: th.bg, border: `1px solid ${th.border}`,
                 borderRadius: 8, padding: "9px 12px", color: th.text, fontSize: 14,
-                boxSizing: "border-box", colorScheme: "dark",
+                boxSizing: "border-box", colorScheme: th.light ? "light" : "dark",
               }} />
             )}
           </>
@@ -1597,7 +1599,7 @@ export default function AuroreApp() {
   const [splash, setSplash] = useState(true);
   const [page, setPage] = useState("home");
   const [lang, setLang] = usePersistentState("lang", "fr");
-  const [themeIdx, setThemeIdx] = usePersistentState("themeIdx", 0);
+  const [themeIdx, setThemeIdx] = usePersistentState("themeIdx", 4);
   const [fontIdx, setFontIdx] = usePersistentState("fontIdx", 1);
   const [entries, setEntries] = usePersistentState("entries", SAMPLE_ENTRIES);
   const [tasks, setTasks] = usePersistentState("tasks", SAMPLE_TASKS);

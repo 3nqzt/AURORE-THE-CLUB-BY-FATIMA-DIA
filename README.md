@@ -21,7 +21,7 @@ holistique basés à Dakar.
 - **Mur Polaroid** — tes moments (et tes photos) en polaroids inclinés.
 - **À faire** — gestion d'intentions avec priorités, filtres et barre de progression.
 - **Rappels** — notifications du navigateur, quotidiennes (à une heure choisie) ou horaires.
-- **Réglages** — langue, 4 thèmes, 3 polices, rappels, verrouillage par code PIN, export JSON.
+- **Réglages** — langue, 5 thèmes (dont un thème clair « Plein jour »), 3 polices, rappels, verrouillage par code PIN, export JSON.
 
 > **Persistance locale** : les entrées, tâches, le thème, la police, l'humeur du
 > jour et le code PIN sont sauvegardés dans le `localStorage` du navigateur, et
@@ -36,13 +36,14 @@ de l'océan : tons corail et pêche chauds, bleus profonds de la mer, blush et
 sable. L'identité reste **minimaliste, jeune et lumineuse**.
 
 - **Palette** — noir chaud `#0E0A09`, corail `#E0764A`, pêche/blush `#F2B488`,
-  blanc chaud `#F7EEE4` ; 3 variations d'ambiance (Crépuscule, Sahara, Lagon).
+  blanc chaud `#F7EEE4` ; 3 ambiances sombres (Crépuscule, Sahara, Lagon) **et un
+  thème clair « Plein jour »** (lumière dorée sur le sable) pour la journée.
 - **Signature** — l'orbe lumineux (soleil/lune) qui change de couleur selon
   l'humeur, posé sur une ligne d'horizon à l'ouverture.
 - **Lueur de coucher de soleil** — un dégradé doux et discret en haut de
   l'écran, rappelant l'horizon, derrière chaque page.
 - **Typographie** — *Fraunces* (serif éditorial) pour les titres et le logotype,
-  police système épurée pour le corps du texte.
+  *Inter* (sans moderne) pour le corps du texte.
 
 ## 🛠️ Stack technique
 

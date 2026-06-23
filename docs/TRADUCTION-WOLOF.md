@@ -195,6 +195,7 @@
 | Crépuscule | Timis | |
 | Sahara | Sahara | |
 | Lagon | Géej | |
+| Plein jour | Bëccëg | |
 
 ## 15. Jours de la semaine
 
