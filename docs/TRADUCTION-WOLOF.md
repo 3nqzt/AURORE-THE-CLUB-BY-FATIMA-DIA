@@ -1,7 +1,7 @@
 # AURORE THE CLUB — Tableau de relecture du Wolof
 
 > **Pour le relecteur / la relectrice (locuteur natif du wolof) :**
-> La colonne **« Wolof (brouillon) »** a été générée automatiquement et doit être
+> La colonne **« Wolof »** a été générée automatiquement et doit être
 > vérifiée. Merci de corriger directement dans la colonne **« Correction proposée »**
 > (ou de cocher ✅ si la traduction convient). La colonne **« Français »** est la
 > référence à respecter.
@@ -13,19 +13,19 @@
 
 ## 1. Général & écrans de démarrage
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | THE CLUB | THE CLUB | |
-| Chargement de ton espace… | Sa bérab mu ngi ñëw… | |
-| Entre ton code PIN | Dugalal sa caabi PIN | |
-| Code incorrect — réessaie | Caabi bi baaxul — jéemaat | |
+| Chargement de ton espace… | Sa espace mu ngi ñëw… | |
+| Entre ton code PIN | Dugalal sa code PIN | |
+| Code incorrect — réessaie | Code bi baaxul — jéemaat | |
 
 ## 2. Navigation (barre du bas)
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Accueil | Kër | |
-| Journal | Téere | |
+| Journal | Surnaal | |
 | Calendrier | Arminaat | |
 | Polaroid | Polaroid | |
 | À faire | Liggéey | |
@@ -33,7 +33,7 @@
 
 ## 3. Humeurs
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Triste | Naqar | |
 | Mélancolique | Jaxle | |
@@ -43,11 +43,11 @@
 
 ## 4. Accueil
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
-| Comment te sens-tu aujourd'hui ? | Naka nga def tey ? | |
+| Comment te sens-tu aujourd'hui ? | No yeggé sa yaram bi tey ? | |
 | Affirmation du jour | Wax ju am solo bu bés bi | |
-| Semaine en humeurs | Ayu-bés ci xel yi | |
+| Semaine en humeurs | Ayubés ci xel yi | |
 | Entrées | Mbind yi | |
 | moments captés | saa yu ñu jot | |
 | Tâches | Liggéey | |
@@ -56,7 +56,7 @@
 
 ## 5. Journal
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Journal intime | Sama téere | |
 | entrées (pluriel) | mbind | |
@@ -79,16 +79,16 @@
 
 ## 6. Recherche
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
-| Rechercher | Wut | |
+| Rechercher | Seet | |
 | Mot-clé dans mes entrées… | Baat ci sama mbind yi… | |
-| Effacer | Far | |
+| Effacer | Dindi | |
 | Aucune entrée ne correspond à ta recherche. | Amul mbind mu dëppoo ak sa wut bi. | |
 
 ## 7. Calendrier
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Calendrier émotionnel | Arminaatu xel mi | |
 | Bilan du mois | Seetlu weer wi | |
@@ -99,7 +99,7 @@
 
 ## 8. Mur Polaroid
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Mur Polaroid | Miiru Polaroid | |
 | Tes moments suspendus dans le temps | Sa saa yi ci jamono ji | |
@@ -107,24 +107,24 @@
 
 ## 9. À faire (tâches)
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | À faire | Lu war a def | |
 | en attente | ci xaar | |
 | ACCOMPLIES | ÑU DEF | |
 | Ajouter une intention… | Yokk benn liggéey… | |
-| ⚡ Haute | ⚡ Kawe | |
+| ⚡ Haute | ⚡DEY DAW REK AMUUL ARRET | |
 | · Normale | · Normaal | |
 | En attente | Ci xaar | |
 | Aujourd'hui | Tey | |
 | ✓ Faites | ✓ Ñu def | |
 | Tout | Lépp | |
-| Rien d'accompli encore — vas-y ! | Dara defaruwul ba leegi — sóobu ! | |
+| Rien d'accompli encore — vas-y ! | Dara defaruwul ba leegi — demaal ! | |
 | Aucune tâche ici ✨ | Amul liggéey fii ✨ | |
 
 ## 10. Réglages
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Paramètres | Tànneef yi | |
 | Sauvegardé ✓ | Denc na ✓ | |
@@ -134,44 +134,44 @@
 
 ## 11. Rappels (notifications)
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Rappel | Fattali | |
 | Chaque jour | Bés bu nekk | |
 | Chaque heure | Waxtu wu nekk | |
 | Activer les notifications | Ubbi yéene yi | |
-| Notifications activées ✓ | Yéene yi ubbiku nañu ✓ | |
+| Notifications activées ✓ | Yéeyne yi ubbiku nañu ✓ | |
 | Notifications bloquées par le navigateur | Navigateur bi tëj na yéene yi | |
-| Notifications non supportées par ce navigateur | Navigateur bii nanguwul yéene yi | |
+| Notifications non supportées par ce navigateur | Navigateur bii nanguwul yéeyne yi | |
 | Les rappels s'affichent tant que l'application est ouverte. | Fattali yi dañuy feeñ bu app bi ubbiku. | |
 | C'est l'heure de prendre un moment pour toi ✦ | Jot na ngir jël saa ngir sa bopp ✦ | |
 
 ## 12. Confidentialité
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Confidentialité | Sutura | |
-| Verrouillage par code PIN | Tëj ak caabi PIN | |
-| 🔒 Code actif | 🔒 Caabi bi dox na | |
+| Verrouillage par code PIN | Tëj ak code PIN | |
+| 🔒 Code actif | 🔒 Code bi dox na | |
 | Non configuré | Defaruwul | |
 | Modifier | Soppi | |
 | Activer | Ubbi | |
-| Code PIN (min. 4 chiffres) | Caabi PIN (4 chiffre ci suuf) | |
-| Confirmer le code | Dëggal caabi bi | |
-| 🔒 Verrouiller l'application maintenant | 🔒 Tëj app bi léegi | |
+| Code PIN (min. 4 chiffres) | Codd PIN (4 sifr ci suuf) | |
+| Confirmer le code | Wooral code bi | |
+| 🔒 Verrouiller l'application maintenant | 🔒 Tëj app bi journal | |
 
 ## 13. Export & pied de page
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Exporter mes données | Génne sama xibaar | |
 | 📦 Exporter en JSON | 📦 Génne ci JSON | |
-| AURORE THE CLUB — Mon Journal | AURORE THE CLUB — Sama Téere | |
-| Projet de Marketing Digital | Liggéeyu Marketing Dijital | |
+| AURORE THE CLUB — Mon Journal | AURORE THE CLUB — Sama joural | |
+| Projet de Marketing Digital | Liggéeyu Marketing Digital | |
 
 ## 14. Noms des thèmes
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Aurore | Njël | |
 | Crépuscule | Timis | |
@@ -180,7 +180,7 @@
 
 ## 15. Jours de la semaine
 
-| Français | Wolof (brouillon) | Correction proposée |
+| Français | Wolof |
 |---|---|---|
 | Lundi | Altine | |
 | Mardi | Talaata | |
@@ -192,13 +192,13 @@
 
 ## 16. Citations (affirmations du jour)
 
-| # | Français | Wolof (brouillon) | Correction proposée |
+| # | Français | Wolof |
 |---|---|---|---|
-| 1 | Chaque matin est une nouvelle chance de devenir qui tu veux être. | Suba bu nekk, mooy yoon bu bees ngir nekk ki nga bëgg a nekk. | |
+| 1 | Chaque matin est une nouvelle chance de devenir qui tu veux être. | Suba bu nekk, mooy yoon bu bees ngir nekk ki nga bëgga nekk. | |
 | 2 | Ta seule concurrence, c'est toi d'hier. | Sa kenn ku ngay àndandoo, mooy yaw bu démb. | |
 | 3 | La discipline est la forme la plus haute d'amour propre. | Yaru sa bopp mooy mbëggeel gi gën a kawe ci sa bopp. | |
 | 4 | Ce que tu ressens est valide. Ce que tu fais de ce ressenti, c'est ton pouvoir. | Li ngay yég dëgg la. Li nga ko def, mooy sa doole. | |
-| 5 | Dakar te regarde grandir. Grandis avec intention. | Ndakaaru mu ngi lay seetaan yokku. Màgg ak pexe. | |
+| 5 | Dakar te regarde grandir. Grandis avec intention. | Ndakaaru mu ngi lay seetaan yokku. Màggal ak pexe. | |
 | 6 | Tu n'es pas en retard. Tu es exactement là où tu dois être. | Yereekuloo. Yaa nga ci bérab bi nga war a nekk. | |
 | 7 | La version de toi d'aujourd'hui mérite autant de soin que celle de demain. | Yaw bu tey, war nga la topptoo ni yaw bu ëllëg. | |
 
