@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -25,18 +25,226 @@ const FONTS = [
 
 const EMOJIS = ["✨","💪","🌙","🌊","🎨","📚","🌸","💛","🫶","🌿","☀️","🌧️","🫖","🎵","💭","🔥","🌺","🦋","🌴","🎯"];
 
-const QUOTES = [
-  "Chaque matin est une nouvelle chance de devenir qui tu veux être.",
-  "Ta seule concurrence, c'est toi d'hier.",
-  "La discipline est la forme la plus haute d'amour propre.",
-  "Ce que tu ressens est valide. Ce que tu fais de ce ressenti, c'est ton pouvoir.",
-  "Dakar te regarde grandir. Grandis avec intention.",
-  "Tu n'es pas en retard. Tu es exactement là où tu dois être.",
-  "La version de toi d'aujourd'hui mérite autant de soin que celle de demain.",
+const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+// Localised weekday names. Index matches Date.getDay() (0 = Sunday).
+// Wolof weekday names: Dibéer, Altine, Talaata, Àllarba, Alxames, Àjjuma, Gaawu.
+const DAYS_FULL = {
+  fr: ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"],
+  wo: ["Dibéer","Altine","Talaata","Àllarba","Alxames","Àjjuma","Gaawu"],
+};
+const DAYS_3 = {
+  fr: ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],
+  wo: ["Dib","Alt","Tal","Àll","Alx","Àjj","Gaa"],
+};
+// Calendar column headers, Monday-first.
+const CAL_DAYS = {
+  fr: ["L","M","M","J","V","S","D"],
+  wo: ["At","Ta","Àl","Ax","Àj","Ga","Di"],
+};
+
+// ─── I18N ─────────────────────────────────────────────────────────────────────
+// NOTE: The Wolof (wo) translations below are a FIRST DRAFT. Wolof is an
+// under-resourced language, so they should be proofread by a native speaker
+// before submission. French (fr) is the reference; missing keys fall back to it.
+
+const LANGS = [
+  { id: "fr", label: "Français" },
+  { id: "wo", label: "Wolof" },
 ];
 
-const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-const DAYS_SHORT = ["L","M","M","J","V","S","D"];
+const STRINGS = {
+  fr: {
+    club: "THE CLUB",
+    loading: "Chargement de ton espace…",
+    lock_enter: "Entre ton code PIN",
+    lock_wrong: "Code incorrect — réessaie",
+
+    nav_home: "Accueil", nav_journal: "Journal", nav_calendar: "Calendrier",
+    nav_wall: "Polaroid", nav_tasks: "À faire", nav_settings: "Réglages",
+
+    mood_1: "Triste", mood_2: "Mélancolique", mood_3: "Neutre", mood_4: "Joyeux(se)", mood_5: "Radieux(se)",
+
+    home_howfeel: "Comment te sens-tu aujourd'hui ?",
+    home_affirmation: "Affirmation du jour",
+    home_week: "Semaine en humeurs",
+    home_entries: "Entrées", home_entries_sub: "moments captés",
+    home_tasks: "Tâches", home_tasks_sub: "accomplies",
+    home_recent: "Derniers moments",
+
+    journal_title: "Journal intime",
+    entries_word: "entrées", entry_word: "entrée",
+    export_btn: "EXPORT", write_btn: "ÉCRIRE",
+    new_moment: "Nouveau moment",
+    mood_now: "Humeur du moment",
+    hour: "Heure",
+    my_moment: "Mon moment",
+    moment_placeholder: "Qu'est-ce qui habite ton esprit aujourd'hui ?",
+    emojis_label: "Emojis",
+    photo_label: "Photo / création",
+    add_photo: "Ajouter une photo",
+    remove_photo: "Retirer",
+    save: "SAUVEGARDER",
+    journal_empty: "Ton journal t'attend. Commence à écrire.",
+    search_label: "Rechercher",
+    search_placeholder: "Mot-clé dans mes entrées…",
+    search_clear: "Effacer",
+    search_none: "Aucune entrée ne correspond à ta recherche.",
+
+    cal_title: "Calendrier émotionnel",
+    cal_summary: "Bilan du mois",
+    cal_dominant: "Humeur dominante",
+    this_month: "ce mois",
+    cal_none: "Aucune entrée ce mois. Commence à écrire ✦",
+    legend: "Légende des humeurs",
+
+    wall_title: "Mur Polaroid",
+    wall_sub: "Tes moments suspendus dans le temps",
+    wall_empty: "Tes polaroids t'attendent. Commence à écrire.",
+
+    tasks_title: "À faire",
+    tasks_pending: "en attente",
+    tasks_done_caps: "ACCOMPLIES",
+    task_placeholder: "Ajouter une intention…",
+    prio_high: "⚡ Haute", prio_normal: "· Normale",
+    filter_pending: "En attente", filter_today: "Aujourd'hui", filter_done: "✓ Faites", filter_all: "Tout",
+    tasks_empty_done: "Rien d'accompli encore — vas-y !",
+    tasks_empty: "Aucune tâche ici ✨",
+
+    settings_title: "Paramètres",
+    saved: "Sauvegardé ✓",
+    lang_label: "Langue",
+    theme_label: "Thème de l'application",
+    font_label: "Police de caractères",
+    reminder_label: "Rappel",
+    reminder_daily: "Chaque jour", reminder_hourly: "Chaque heure",
+    reminder_enable: "Activer les notifications",
+    reminder_on: "Notifications activées ✓",
+    reminder_denied: "Notifications bloquées par le navigateur",
+    reminder_unsupported: "Notifications non supportées par ce navigateur",
+    reminder_hint: "Les rappels s'affichent tant que l'application est ouverte.",
+    reminder_body: "C'est l'heure de prendre un moment pour toi ✦",
+    privacy_label: "Confidentialité",
+    pin_title: "Verrouillage par code PIN",
+    pin_active: "🔒 Code actif", pin_none: "Non configuré",
+    modify: "Modifier", activate: "Activer",
+    pin_placeholder: "Code PIN (min. 4 chiffres)",
+    pin_confirm: "Confirmer le code",
+    lock_now: "🔒 Verrouiller l'application maintenant",
+    export_label: "Exporter mes données",
+    export_json: "📦 Exporter en JSON",
+    export_journal_header: "AURORE THE CLUB — Mon Journal",
+    project_credit: "Projet de Marketing Digital",
+
+    theme_0: "Aurore", theme_1: "Crépuscule", theme_2: "Sahara", theme_3: "Lagon",
+  },
+  wo: {
+    club: "THE CLUB",
+    loading: "Sa bérab mu ngi ñëw…",
+    lock_enter: "Dugalal sa caabi PIN",
+    lock_wrong: "Caabi bi baaxul — jéemaat",
+
+    nav_home: "Kër", nav_journal: "Téere", nav_calendar: "Arminaat",
+    nav_wall: "Polaroid", nav_tasks: "Liggéey", nav_settings: "Tànneef",
+
+    mood_1: "Naqar", mood_2: "Jaxle", mood_3: "Ci digg", mood_4: "Bég", mood_5: "Melax",
+
+    home_howfeel: "Naka nga def tey ?",
+    home_affirmation: "Wax ju am solo bu bés bi",
+    home_week: "Ayu-bés ci xel yi",
+    home_entries: "Mbind yi", home_entries_sub: "saa yu ñu jot",
+    home_tasks: "Liggéey", home_tasks_sub: "ñu def",
+    home_recent: "Saa yi mujj",
+
+    journal_title: "Sama téere",
+    entries_word: "mbind", entry_word: "mbind",
+    export_btn: "GÉNNE", write_btn: "BIND",
+    new_moment: "Saa bu bees",
+    mood_now: "Xel ci saa si",
+    hour: "Waxtu",
+    my_moment: "Sama saa",
+    moment_placeholder: "Lan moo nekk ci sa xel tey ?",
+    emojis_label: "Emoji yi",
+    photo_label: "Nataal / liggéey",
+    add_photo: "Yokk nataal",
+    remove_photo: "Dindi",
+    save: "DENC",
+    journal_empty: "Sa téere mu ngi lay xaar. Tàmbalee bind.",
+    search_label: "Wut",
+    search_placeholder: "Baat ci sama mbind yi…",
+    search_clear: "Far",
+    search_none: "Amul mbind mu dëppoo ak sa wut bi.",
+
+    cal_title: "Arminaatu xel mi",
+    cal_summary: "Seetlu weer wi",
+    cal_dominant: "Xel mi ëpp",
+    this_month: "ci weer wi",
+    cal_none: "Amul mbind ci weer wi. Tàmbalee bind ✦",
+    legend: "Tekki xel yi",
+
+    wall_title: "Miiru Polaroid",
+    wall_sub: "Sa saa yi ci jamono ji",
+    wall_empty: "Sa polaroid yi ñu ngi lay xaar. Tàmbalee bind.",
+
+    tasks_title: "Lu war a def",
+    tasks_pending: "ci xaar",
+    tasks_done_caps: "ÑU DEF",
+    task_placeholder: "Yokk benn liggéey…",
+    prio_high: "⚡ Kawe", prio_normal: "· Normaal",
+    filter_pending: "Ci xaar", filter_today: "Tey", filter_done: "✓ Ñu def", filter_all: "Lépp",
+    tasks_empty_done: "Dara defaruwul ba leegi — sóobu !",
+    tasks_empty: "Amul liggéey fii ✨",
+
+    settings_title: "Tànneef yi",
+    saved: "Denc na ✓",
+    lang_label: "Làkk",
+    theme_label: "Melokaanu app bi",
+    font_label: "Araf yi",
+    reminder_label: "Fattali",
+    reminder_daily: "Bés bu nekk", reminder_hourly: "Waxtu wu nekk",
+    reminder_enable: "Ubbi yéene yi",
+    reminder_on: "Yéene yi ubbiku nañu ✓",
+    reminder_denied: "Navigateur bi tëj na yéene yi",
+    reminder_unsupported: "Navigateur bii nanguwul yéene yi",
+    reminder_hint: "Fattali yi dañuy feeñ bu app bi ubbiku.",
+    reminder_body: "Jot na ngir jël saa ngir sa bopp ✦",
+    privacy_label: "Sutura",
+    pin_title: "Tëj ak caabi PIN",
+    pin_active: "🔒 Caabi bi dox na", pin_none: "Defaruwul",
+    modify: "Soppi", activate: "Ubbi",
+    pin_placeholder: "Caabi PIN (4 chiffre ci suuf)",
+    pin_confirm: "Dëggal caabi bi",
+    lock_now: "🔒 Tëj app bi léegi",
+    export_label: "Génne sama xibaar",
+    export_json: "📦 Génne ci JSON",
+    export_journal_header: "AURORE THE CLUB — Sama Téere",
+    project_credit: "Liggéeyu Marketing Dijital",
+
+    theme_0: "Njël", theme_1: "Timis", theme_2: "Sahara", theme_3: "Géej",
+  },
+};
+
+const QUOTES = {
+  fr: [
+    "Chaque matin est une nouvelle chance de devenir qui tu veux être.",
+    "Ta seule concurrence, c'est toi d'hier.",
+    "La discipline est la forme la plus haute d'amour propre.",
+    "Ce que tu ressens est valide. Ce que tu fais de ce ressenti, c'est ton pouvoir.",
+    "Dakar te regarde grandir. Grandis avec intention.",
+    "Tu n'es pas en retard. Tu es exactement là où tu dois être.",
+    "La version de toi d'aujourd'hui mérite autant de soin que celle de demain.",
+  ],
+  // First-draft Wolof — to be proofread by a native speaker.
+  wo: [
+    "Suba bu nekk, mooy yoon bu bees ngir nekk ki nga bëgg a nekk.",
+    "Sa kenn ku ngay àndandoo, mooy yaw bu démb.",
+    "Yaru sa bopp mooy mbëggeel gi gën a kawe ci sa bopp.",
+    "Li ngay yég dëgg la. Li nga ko def, mooy sa doole.",
+    "Ndakaaru mu ngi lay seetaan yokku. Màgg ak pexe.",
+    "Yereekuloo. Yaa nga ci bérab bi nga war a nekk.",
+    "Yaw bu tey, war nga la topptoo ni yaw bu ëllëg.",
+  ],
+};
 
 const SAMPLE_ENTRIES = [
   { id:1, date:"2025-06-22", time:"08:30", text:"Belle journée productive. Mon projet prend forme et je suis fière du chemin parcouru. Aurore the club m'a vraiment aidée à me recentrer sur l'essentiel.", mood:5, emojis:["✨","💪"] },
@@ -59,17 +267,46 @@ const SAMPLE_TASKS = [
 
 const getMood = (v) => MOODS.find(m => m.v === v) || MOODS[2];
 const todayStr = () => new Date().toISOString().split("T")[0];
-const formatDate = (ds) => {
+const formatDate = (ds, lang = "fr") => {
   const d = new Date(ds + "T00:00:00");
-  const days = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+  const days = DAYS_3[lang] || DAYS_3.fr;
   return `${days[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`;
 };
+const makeT = (lang) => (key) => {
+  const table = STRINGS[lang] || STRINGS.fr;
+  return table[key] != null ? table[key] : (STRINGS.fr[key] != null ? STRINGS.fr[key] : key);
+};
+// Count + word, e.g. "3 entrées" / "3 mbind".
+const countLabel = (n, lang, t) =>
+  lang === "fr" ? `${n} ${n > 1 ? t("entries_word") : t("entry_word")}` : `${n} ${t("entries_word")}`;
+
+// Read a downscaled JPEG data URL from an image File, so photos don't blow the
+// localStorage quota. Returns a Promise<string>.
+const fileToResizedDataURL = (file, maxDim = 900, quality = 0.72) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width >= height && width > maxDim) { height = Math.round(height * maxDim / width); width = maxDim; }
+        else if (height > width && height > maxDim) { width = Math.round(width * maxDim / height); height = maxDim; }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
 // ─── PERSISTENCE ──────────────────────────────────────────────────────────────
 
 const STORAGE_PREFIX = "aurore:";
 
-// Read a persisted value once, falling back to `fallback` if absent/invalid.
 const readStored = (key, fallback) => {
   try {
     const raw = localStorage.getItem(STORAGE_PREFIX + key);
@@ -79,8 +316,8 @@ const readStored = (key, fallback) => {
   }
 };
 
-// useState that mirrors its value to localStorage (gracefully no-ops if storage
-// is unavailable, e.g. private browsing).
+// useState that mirrors its value to localStorage (no-ops if storage is
+// unavailable, e.g. private browsing or quota exceeded).
 function usePersistentState(key, initial) {
   const [state, setState] = useState(() => readStored(key, initial));
   useEffect(() => {
@@ -148,7 +385,7 @@ function Btn({ children, onClick, variant = "primary", th, style = {} }) {
 
 // ─── SPLASH SCREEN ───────────────────────────────────────────────────────────
 
-function SplashScreen({ th }) {
+function SplashScreen({ th, t }) {
   return (
     <div style={{
       minHeight: "100vh", background: th.bg,
@@ -161,10 +398,10 @@ function SplashScreen({ th }) {
         <p style={{ color: th.accent, fontFamily: "Georgia, serif", fontSize: 30, letterSpacing: 6, margin: "0 0 4px", fontWeight: 700 }}>
           AURORE
         </p>
-        <p style={{ color: th.muted, fontSize: 11, letterSpacing: 5, margin: 0 }}>THE CLUB</p>
+        <p style={{ color: th.muted, fontSize: 11, letterSpacing: 5, margin: 0 }}>{t("club")}</p>
       </div>
       <p style={{ color: th.faint, fontSize: 12, marginTop: 48, letterSpacing: 2, fontStyle: "italic" }}>
-        Chargement de ton espace…
+        {t("loading")}
       </p>
     </div>
   );
@@ -172,7 +409,7 @@ function SplashScreen({ th }) {
 
 // ─── LOCK SCREEN ─────────────────────────────────────────────────────────────
 
-function LockScreen({ onUnlock, error, th }) {
+function LockScreen({ onUnlock, error, th, t }) {
   const [val, setVal] = useState("");
   const hit = (d) => {
     const next = (val + d).slice(0, 6);
@@ -187,10 +424,10 @@ function LockScreen({ onUnlock, error, th }) {
       padding: 32, fontFamily: "inherit",
     }}>
       <p style={{ color: th.accent, fontFamily: "Georgia, serif", fontSize: 22, letterSpacing: 4, margin: "0 0 4px" }}>AURORE</p>
-      <p style={{ color: th.muted, fontSize: 10, letterSpacing: 4, margin: "0 0 40px" }}>THE CLUB</p>
+      <p style={{ color: th.muted, fontSize: 10, letterSpacing: 4, margin: "0 0 40px" }}>{t("club")}</p>
       <MoodOrb mood={4} size={72} animated={true} />
       <p style={{ color: error ? "#E05050" : th.muted, fontSize: 13, margin: "28px 0 16px", transition: "color 0.2s" }}>
-        {error ? "Code incorrect — réessaie" : "Entre ton code PIN"}
+        {error ? t("lock_wrong") : t("lock_enter")}
       </p>
       <div style={{ display: "flex", gap: 14, marginBottom: 36 }}>
         {[...Array(4)].map((_, i) => (
@@ -220,14 +457,16 @@ function LockScreen({ onUnlock, error, th }) {
 
 // ─── HOME PAGE ───────────────────────────────────────────────────────────────
 
-function HomePage({ entries, tasks, th, ff, currentMood, setCurrentMood, onNewEntry }) {
+function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood, onNewEntry }) {
   const today = todayStr();
-  const quote = QUOTES[new Date().getDate() % QUOTES.length];
+  const quoteList = QUOTES[lang] || QUOTES.fr;
+  const quote = quoteList[new Date().getDate() % quoteList.length];
+  const headerWeekday = (DAYS_FULL[lang] || DAYS_FULL.fr)[new Date().getDay()].toUpperCase();
   const week = [...Array(7)].map((_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
     const ds = d.toISOString().split("T")[0];
     const entry = entries.find(e => e.date === ds);
-    return { ds, mood: entry?.mood, day: DAYS_SHORT[(d.getDay() + 6) % 7], isToday: ds === today };
+    return { ds, mood: entry?.mood, day: (DAYS_3[lang] || DAYS_3.fr)[d.getDay()].slice(0,1), isToday: ds === today };
   });
 
   return (
@@ -236,12 +475,12 @@ function HomePage({ entries, tasks, th, ff, currentMood, setCurrentMood, onNewEn
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <p style={{ color: th.muted, fontSize: 10, letterSpacing: 3, margin: "0 0 3px" }}>
-            {new Date().toLocaleDateString("fr-FR", { weekday: "long" }).toUpperCase()} · {new Date().getDate()} {MONTHS[new Date().getMonth()].toUpperCase()}
+            {headerWeekday} · {new Date().getDate()} {MONTHS[new Date().getMonth()].toUpperCase()}
           </p>
           <h1 style={{ color: th.accent, fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 700, letterSpacing: 3, margin: 0 }}>
             AURORE
           </h1>
-          <p style={{ color: th.muted, fontSize: 9, letterSpacing: 5, margin: "2px 0 0" }}>THE CLUB</p>
+          <p style={{ color: th.muted, fontSize: 9, letterSpacing: 5, margin: "2px 0 0" }}>{t("club")}</p>
         </div>
         <button onClick={onNewEntry} style={{
           width: 48, height: 48, borderRadius: "50%", background: th.accent,
@@ -253,7 +492,7 @@ function HomePage({ entries, tasks, th, ff, currentMood, setCurrentMood, onNewEn
 
       {/* Mood card */}
       <Card th={th} style={{ textAlign: "center", padding: "30px 20px", marginBottom: 14 }}>
-        <Label th={th}>Comment te sens-tu aujourd'hui ?</Label>
+        <Label th={th}>{t("home_howfeel")}</Label>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
           <MoodOrb mood={currentMood} size={110} animated={true} />
         </div>
@@ -268,13 +507,13 @@ function HomePage({ entries, tasks, th, ff, currentMood, setCurrentMood, onNewEn
           ))}
         </div>
         <p style={{ color: getMood(currentMood).c, fontSize: 12, margin: 0, fontStyle: "italic", letterSpacing: 1 }}>
-          {getMood(currentMood).l}
+          {t(`mood_${currentMood}`)}
         </p>
       </Card>
 
       {/* Quote */}
       <Card th={th} style={{ marginBottom: 14, borderLeft: `3px solid ${th.accent}`, paddingLeft: 16 }}>
-        <Label th={th}>Affirmation du jour</Label>
+        <Label th={th}>{t("home_affirmation")}</Label>
         <p style={{ color: th.text, fontSize: 14, fontStyle: "italic", lineHeight: 1.7, margin: 0, fontFamily: "Georgia, serif" }}>
           "{quote}"
         </p>
@@ -282,7 +521,7 @@ function HomePage({ entries, tasks, th, ff, currentMood, setCurrentMood, onNewEn
 
       {/* Week strip */}
       <Card th={th} style={{ marginBottom: 14 }}>
-        <Label th={th}>Semaine en humeurs</Label>
+        <Label th={th}>{t("home_week")}</Label>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           {week.map((w, i) => {
             const m = w.mood ? getMood(w.mood) : null;
@@ -306,30 +545,33 @@ function HomePage({ entries, tasks, th, ff, currentMood, setCurrentMood, onNewEn
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 18 }}>
         <Card th={th} style={{ padding: 14 }}>
-          <Label th={th}>Entrées</Label>
+          <Label th={th}>{t("home_entries")}</Label>
           <p style={{ color: th.text, fontSize: 28, fontWeight: 700, margin: 0 }}>{entries.length}</p>
-          <p style={{ color: th.muted, fontSize: 11, margin: "2px 0 0" }}>moments captés</p>
+          <p style={{ color: th.muted, fontSize: 11, margin: "2px 0 0" }}>{t("home_entries_sub")}</p>
         </Card>
         <Card th={th} style={{ padding: 14 }}>
-          <Label th={th}>Tâches</Label>
+          <Label th={th}>{t("home_tasks")}</Label>
           <p style={{ color: th.accent, fontSize: 28, fontWeight: 700, margin: 0 }}>
             {tasks.filter(t => t.done).length}/{tasks.length}
           </p>
-          <p style={{ color: th.muted, fontSize: 11, margin: "2px 0 0" }}>accomplies</p>
+          <p style={{ color: th.muted, fontSize: 11, margin: "2px 0 0" }}>{t("home_tasks_sub")}</p>
         </Card>
       </div>
 
       {/* Recent entries */}
-      <Label th={th}>Derniers moments</Label>
+      <Label th={th}>{t("home_recent")}</Label>
       {entries.slice(0, 3).map(e => {
         const m = getMood(e.mood);
         return (
           <Card key={e.id} th={th} style={{ marginBottom: 10, borderLeft: `3px solid ${m.c}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
               <span style={{ fontSize: 18 }}>{m.e}</span>
-              <span style={{ color: th.muted, fontSize: 11 }}>{formatDate(e.date)}</span>
+              <span style={{ color: th.muted, fontSize: 11 }}>{formatDate(e.date, lang)}</span>
               <span style={{ color: th.muted, fontSize: 11, marginLeft: "auto" }}>{e.time}</span>
             </div>
+            {e.photo && (
+              <img src={e.photo} alt="" style={{ width: "100%", maxHeight: 150, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />
+            )}
             <p style={{ color: th.text, fontSize: 13, lineHeight: 1.6, margin: "0 0 6px" }}>
               {e.text.length > 95 ? e.text.slice(0, 95) + "…" : e.text}
             </p>
@@ -343,44 +585,94 @@ function HomePage({ entries, tasks, th, ff, currentMood, setCurrentMood, onNewEn
 
 // ─── JOURNAL PAGE ─────────────────────────────────────────────────────────────
 
-function JournalPage({ entries, setEntries, th, ff, showNew, setShowNew }) {
+function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew }) {
   const [text, setText] = useState("");
   const [mood, setMood] = useState(4);
   const [selEmojis, setSelEmojis] = useState([]);
+  const [photo, setPhoto] = useState(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const fileRef = useRef(null);
   const now = new Date();
   const [time, setTime] = useState(`${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`);
+
+  // Search by date + keyword
+  const [searchDate, setSearchDate] = useState("");
+  const [searchText, setSearchText] = useState("");
 
   const toggleEmoji = (e) => {
     setSelEmojis(prev => prev.includes(e) ? prev.filter(x => x !== e) : prev.length < 5 ? [...prev, e] : prev);
   };
 
+  const onPickPhoto = async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    setPhotoBusy(true);
+    try { setPhoto(await fileToResizedDataURL(file)); }
+    catch { /* ignore unreadable image */ }
+    finally { setPhotoBusy(false); if (fileRef.current) fileRef.current.value = ""; }
+  };
+
+  const resetForm = () => { setText(""); setSelEmojis([]); setMood(4); setPhoto(null); };
+
   const save = () => {
-    if (!text.trim()) return;
-    setEntries(prev => [{ id: Date.now(), date: todayStr(), time, text: text.trim(), mood, emojis: selEmojis }, ...prev]);
-    setText(""); setSelEmojis([]); setMood(4); setShowNew(false);
+    if (!text.trim() && !photo) return;
+    setEntries(prev => [{ id: Date.now(), date: todayStr(), time, text: text.trim(), mood, emojis: selEmojis, photo }, ...prev]);
+    resetForm(); setShowNew(false);
   };
 
   const exportTxt = () => {
     const content = entries.map(e =>
-      `━━━━━━━━━━━━━━━━━━━━\n${formatDate(e.date)} · ${e.time}\n[${getMood(e.mood).l}] ${e.emojis.join(" ")}\n\n${e.text}\n`
+      `━━━━━━━━━━━━━━━━━━━━\n${formatDate(e.date, lang)} · ${e.time}\n[${t(`mood_${e.mood}`)}] ${e.emojis.join(" ")}${e.photo ? "  📷" : ""}\n\n${e.text}\n`
     ).join("\n");
-    const blob = new Blob([`AURORE THE CLUB — Mon Journal\n${"═".repeat(36)}\n\n${content}`], { type: "text/plain" });
+    const blob = new Blob([`${t("export_journal_header")}\n${"═".repeat(36)}\n\n${content}`], { type: "text/plain" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = "aurore-journal.txt"; a.click();
   };
 
+  const hasSearch = searchDate || searchText.trim();
+  const visible = entries.filter(e => {
+    if (searchDate && e.date !== searchDate) return false;
+    if (searchText.trim() && !e.text.toLowerCase().includes(searchText.trim().toLowerCase())) return false;
+    return true;
+  });
+
   return (
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
         <div>
-          <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: 0 }}>Journal intime</h2>
-          <p style={{ color: th.muted, fontSize: 12, margin: "4px 0 0" }}>{entries.length} entrée{entries.length > 1 ? "s" : ""}</p>
+          <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: 0 }}>{t("journal_title")}</h2>
+          <p style={{ color: th.muted, fontSize: 12, margin: "4px 0 0" }}>{countLabel(entries.length, lang, t)}</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <Btn onClick={exportTxt} variant="secondary" th={th} style={{ padding: "8px 10px", fontSize: 11 }}>↑ EXPORT</Btn>
-          <Btn onClick={() => setShowNew(true)} variant="primary" th={th} style={{ padding: "8px 14px", fontSize: 11 }}>+ ÉCRIRE</Btn>
+          <Btn onClick={exportTxt} variant="secondary" th={th} style={{ padding: "8px 10px", fontSize: 11 }}>↑ {t("export_btn")}</Btn>
+          <Btn onClick={() => setShowNew(true)} variant="primary" th={th} style={{ padding: "8px 14px", fontSize: 11 }}>+ {t("write_btn")}</Btn>
         </div>
       </div>
+
+      {/* Search by date + keyword */}
+      <Card th={th} style={{ marginBottom: 16, padding: 12 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ fontSize: 16 }}>🔍</span>
+          <input type="date" value={searchDate} onChange={e => setSearchDate(e.target.value)} style={{
+            background: th.bg, border: `1px solid ${th.border}`, borderRadius: 8,
+            padding: "8px 10px", color: th.text, fontSize: 13, colorScheme: "dark",
+          }} />
+          <input
+            value={searchText} onChange={e => setSearchText(e.target.value)}
+            placeholder={t("search_placeholder")}
+            style={{
+              flex: 1, minWidth: 0, background: th.bg, border: `1px solid ${th.border}`,
+              borderRadius: 8, padding: "8px 10px", color: th.text, fontSize: 13, fontFamily: ff,
+            }}
+          />
+          {hasSearch && (
+            <button onClick={() => { setSearchDate(""); setSearchText(""); }} style={{
+              background: "none", border: `1px solid ${th.border}`, borderRadius: 8,
+              padding: "8px 10px", color: th.muted, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap",
+            }}>{t("search_clear")}</button>
+          )}
+        </div>
+      </Card>
 
       {/* New entry modal */}
       {showNew && (
@@ -389,16 +681,17 @@ function JournalPage({ entries, setEntries, th, ff, showNew, setShowNew }) {
           display: "flex", alignItems: "flex-end",
         }}>
           <div style={{
-            width: "100%", background: th.surface, borderRadius: "22px 22px 0 0",
+            width: "100%", maxWidth: 480, margin: "0 auto",
+            background: th.surface, borderRadius: "22px 22px 0 0",
             padding: "24px 20px 40px", maxHeight: "93vh", overflowY: "auto",
             border: `1px solid ${th.border}`,
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-              <h3 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 18, margin: 0 }}>Nouveau moment</h3>
-              <button onClick={() => setShowNew(false)} style={{ background: "none", border: "none", color: th.muted, fontSize: 22, cursor: "pointer" }}>✕</button>
+              <h3 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 18, margin: 0 }}>{t("new_moment")}</h3>
+              <button onClick={() => { resetForm(); setShowNew(false); }} style={{ background: "none", border: "none", color: th.muted, fontSize: 22, cursor: "pointer" }}>✕</button>
             </div>
 
-            <Label th={th}>Humeur du moment</Label>
+            <Label th={th}>{t("mood_now")}</Label>
             <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
               {MOODS.map(m => (
                 <button key={m.v} onClick={() => setMood(m.v)} style={{
@@ -410,17 +703,17 @@ function JournalPage({ entries, setEntries, th, ff, showNew, setShowNew }) {
               ))}
             </div>
 
-            <Label th={th}>Heure</Label>
+            <Label th={th}>{t("hour")}</Label>
             <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{
               width: "100%", background: th.bg, border: `1px solid ${th.border}`,
               borderRadius: 8, padding: "10px 14px", color: th.text, fontSize: 14,
-              marginBottom: 18, boxSizing: "border-box",
+              marginBottom: 18, boxSizing: "border-box", colorScheme: "dark",
             }} />
 
-            <Label th={th}>Mon moment</Label>
+            <Label th={th}>{t("my_moment")}</Label>
             <textarea
               value={text} onChange={e => setText(e.target.value)}
-              placeholder="Qu'est-ce qui habite ton esprit aujourd'hui ?"
+              placeholder={t("moment_placeholder")}
               rows={6}
               style={{
                 width: "100%", background: th.bg, border: `1px solid ${th.border}`,
@@ -430,7 +723,27 @@ function JournalPage({ entries, setEntries, th, ff, showNew, setShowNew }) {
               }}
             />
 
-            <Label th={th}>Emojis ({selEmojis.length}/5)</Label>
+            {/* Photo / creation */}
+            <Label th={th}>{t("photo_label")}</Label>
+            <input ref={fileRef} type="file" accept="image/*" onChange={onPickPhoto} style={{ display: "none" }} />
+            {photo ? (
+              <div style={{ position: "relative", marginBottom: 20 }}>
+                <img src={photo} alt="" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 12 }} />
+                <button onClick={() => setPhoto(null)} style={{
+                  position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)",
+                  border: "none", borderRadius: 8, padding: "6px 10px", color: "#fff",
+                  fontSize: 11, cursor: "pointer",
+                }}>{t("remove_photo")} ✕</button>
+              </div>
+            ) : (
+              <button onClick={() => fileRef.current?.click()} disabled={photoBusy} style={{
+                width: "100%", background: th.bg, border: `1px dashed ${th.border}`,
+                borderRadius: 12, padding: "16px", color: th.muted, fontSize: 13,
+                cursor: "pointer", marginBottom: 20,
+              }}>{photoBusy ? "…" : `📷 ${t("add_photo")}`}</button>
+            )}
+
+            <Label th={th}>{t("emojis_label")} ({selEmojis.length}/5)</Label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
               {EMOJIS.map(e => (
                 <button key={e} onClick={() => toggleEmoji(e)} style={{
@@ -447,36 +760,47 @@ function JournalPage({ entries, setEntries, th, ff, showNew, setShowNew }) {
               padding: 15, color: "#000", fontSize: 15, fontWeight: 700,
               cursor: "pointer", letterSpacing: 1,
             }}>
-              SAUVEGARDER ✦
+              {t("save")} ✦
             </button>
           </div>
         </div>
       )}
 
-      {/* Entries list */}
+      {/* Empty state */}
       {entries.length === 0 && (
         <Card th={th} style={{ textAlign: "center", padding: 44 }}>
           <p style={{ fontSize: 38, margin: "0 0 14px" }}>📖</p>
-          <p style={{ color: th.muted, fontSize: 14, margin: 0 }}>Ton journal t'attend. Commence à écrire.</p>
+          <p style={{ color: th.muted, fontSize: 14, margin: 0 }}>{t("journal_empty")}</p>
         </Card>
       )}
 
-      {entries.reduce((acc, e, idx) => {
-        const showDate = idx === 0 || entries[idx - 1].date !== e.date;
+      {/* No search results */}
+      {entries.length > 0 && visible.length === 0 && (
+        <Card th={th} style={{ textAlign: "center", padding: 30 }}>
+          <p style={{ color: th.muted, fontSize: 14, margin: 0 }}>{t("search_none")}</p>
+        </Card>
+      )}
+
+      {/* Entries list (grouped by date) */}
+      {visible.reduce((acc, e, idx) => {
+        const showDate = idx === 0 || visible[idx - 1].date !== e.date;
         const m = getMood(e.mood);
         return [...acc,
           showDate ? (
             <p key={`d-${e.date}-${idx}`} style={{ color: th.muted, fontSize: 10, letterSpacing: 2, margin: "18px 0 8px" }}>
-              {formatDate(e.date).toUpperCase()}
+              {formatDate(e.date, lang).toUpperCase()}
             </p>
           ) : null,
           <Card key={e.id} th={th} style={{ marginBottom: 10, borderLeft: `3px solid ${m.c}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <span style={{ fontSize: 18 }}>{m.e}</span>
-              <span style={{ color: m.c, fontSize: 11, fontWeight: 600 }}>{m.l}</span>
+              <span style={{ color: m.c, fontSize: 11, fontWeight: 600 }}>{t(`mood_${e.mood}`)}</span>
               <span style={{ color: th.muted, fontSize: 11, marginLeft: "auto" }}>{e.time}</span>
             </div>
-            <p style={{ color: th.text, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{e.text}</p>
+            {e.photo && (
+              <img src={e.photo} alt="" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />
+            )}
+            {e.text && <p style={{ color: th.text, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{e.text}</p>}
             {e.emojis.length > 0 && <p style={{ margin: "10px 0 0", fontSize: 18 }}>{e.emojis.join(" ")}</p>}
           </Card>,
         ].filter(Boolean);
@@ -487,7 +811,7 @@ function JournalPage({ entries, setEntries, th, ff, showNew, setShowNew }) {
 
 // ─── CALENDAR PAGE ───────────────────────────────────────────────────────────
 
-function CalendarPage({ entries, th, ff }) {
+function CalendarPage({ entries, th, ff, lang, t }) {
   const now = new Date();
   const [yr, setYr] = useState(now.getFullYear());
   const [mo, setMo] = useState(now.getMonth());
@@ -511,7 +835,7 @@ function CalendarPage({ entries, th, ff }) {
   return (
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
       <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: "0 0 20px" }}>
-        Calendrier émotionnel
+        {t("cal_title")}
       </h2>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -521,7 +845,7 @@ function CalendarPage({ entries, th, ff }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 6 }}>
-        {DAYS_SHORT.map((d, i) => <div key={i} style={{ textAlign: "center", color: th.muted, fontSize: 10, letterSpacing: 1, paddingBottom: 4 }}>{d}</div>)}
+        {(CAL_DAYS[lang] || CAL_DAYS.fr).map((d, i) => <div key={i} style={{ textAlign: "center", color: th.muted, fontSize: 10, letterSpacing: 1, paddingBottom: 4 }}>{d}</div>)}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 20 }}>
@@ -548,21 +872,21 @@ function CalendarPage({ entries, th, ff }) {
         <Card th={th} style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 14 }}>
           <MoodOrb mood={avg} size={54} animated={false} />
           <div>
-            <Label th={th}>Bilan du mois</Label>
+            <Label th={th}>{t("cal_summary")}</Label>
             <p style={{ color: th.text, fontSize: 13, margin: "0 0 3px" }}>
-              Humeur dominante: <strong style={{ color: th.accent }}>{getMood(avg).l}</strong>
+              {t("cal_dominant")}: <strong style={{ color: th.accent }}>{t(`mood_${avg}`)}</strong>
             </p>
-            <p style={{ color: th.muted, fontSize: 12, margin: 0 }}>{mvals.length} entrée{mvals.length > 1 ? "s" : ""} ce mois</p>
+            <p style={{ color: th.muted, fontSize: 12, margin: 0 }}>{countLabel(mvals.length, lang, t)} {t("this_month")}</p>
           </div>
         </Card>
       ) : (
         <Card th={th} style={{ textAlign: "center", padding: 24 }}>
-          <p style={{ color: th.muted, fontSize: 13, margin: 0 }}>Aucune entrée ce mois. Commence à écrire ✦</p>
+          <p style={{ color: th.muted, fontSize: 13, margin: 0 }}>{t("cal_none")}</p>
         </Card>
       )}
 
       <Card th={th} style={{ marginTop: 12 }}>
-        <Label th={th}>Légende des humeurs</Label>
+        <Label th={th}>{t("legend")}</Label>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {MOODS.map(m => (
             <div key={m.v} style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -571,7 +895,7 @@ function CalendarPage({ entries, th, ff }) {
                 background: m.c + "44", border: `2px solid ${m.c}`,
                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0,
               }}>{m.e}</div>
-              <span style={{ color: th.text, fontSize: 13 }}>{m.l}</span>
+              <span style={{ color: th.text, fontSize: 13 }}>{t(`mood_${m.v}`)}</span>
             </div>
           ))}
         </div>
@@ -582,19 +906,19 @@ function CalendarPage({ entries, th, ff }) {
 
 // ─── POLAROID WALL ───────────────────────────────────────────────────────────
 
-function PolaroidPage({ entries, th, ff }) {
+function PolaroidPage({ entries, th, ff, lang, t }) {
   const angles = [-2, 1.5, -1.2, 2.2, -1.8, 1, -2.5, 0.8];
   return (
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
       <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
-        Mur Polaroid ✦
+        {t("wall_title")} ✦
       </h2>
-      <p style={{ color: th.muted, fontSize: 13, margin: "0 0 22px" }}>Tes moments suspendus dans le temps</p>
+      <p style={{ color: th.muted, fontSize: 13, margin: "0 0 22px" }}>{t("wall_sub")}</p>
 
       {entries.length === 0 && (
         <Card th={th} style={{ textAlign: "center", padding: 44 }}>
           <p style={{ fontSize: 36, margin: "0 0 14px" }}>🌅</p>
-          <p style={{ color: th.muted, fontSize: 14, margin: 0 }}>Tes polaroids t'attendent. Commence à écrire.</p>
+          <p style={{ color: th.muted, fontSize: 14, margin: 0 }}>{t("wall_empty")}</p>
         </Card>
       )}
 
@@ -615,20 +939,24 @@ function PolaroidPage({ entries, th, ff }) {
             onMouseEnter={ev => { ev.currentTarget.style.transform = `rotate(0deg) scale(1.04)`; ev.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.8)"; }}
             onMouseLeave={ev => { ev.currentTarget.style.transform = `rotate(${angle}deg)`; ev.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.65)"; }}
             >
-              <div style={{
-                height: 92, borderRadius: 2, marginBottom: 9,
-                background: `linear-gradient(135deg, ${m.c}55, ${m.c}cc)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 38,
-              }}>{m.e}</div>
+              {e.photo ? (
+                <img src={e.photo} alt="" style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 2, marginBottom: 9, display: "block" }} />
+              ) : (
+                <div style={{
+                  height: 92, borderRadius: 2, marginBottom: 9,
+                  background: `linear-gradient(135deg, ${m.c}55, ${m.c}cc)`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 38,
+                }}>{m.e}</div>
+              )}
               <p style={{
                 color: "#2A1810", fontSize: 10, lineHeight: 1.45,
                 margin: "0 0 6px", fontFamily: "Georgia, serif",
               }}>
-                {e.text.length > 60 ? e.text.slice(0, 60) + "…" : e.text}
+                {e.text ? (e.text.length > 60 ? e.text.slice(0, 60) + "…" : e.text) : `${m.e} ${t(`mood_${e.mood}`)}`}
               </p>
               <p style={{ color: "#AA9080", fontSize: 9, margin: 0, textAlign: "right" }}>
-                {formatDate(e.date)}
+                {formatDate(e.date, lang)}
               </p>
             </div>
           );
@@ -640,7 +968,7 @@ function PolaroidPage({ entries, th, ff }) {
 
 // ─── TASKS PAGE ──────────────────────────────────────────────────────────────
 
-function TasksPage({ tasks, setTasks, th, ff }) {
+function TasksPage({ tasks, setTasks, th, ff, lang, t }) {
   const [newText, setNewText] = useState("");
   const [priority, setPriority] = useState("normale");
   const [filter, setFilter] = useState("pending");
@@ -668,12 +996,12 @@ function TasksPage({ tasks, setTasks, th, ff }) {
     <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
-          <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: 0 }}>À faire</h2>
-          <p style={{ color: th.muted, fontSize: 12, margin: "4px 0 0" }}>{pending} en attente</p>
+          <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: 0 }}>{t("tasks_title")}</h2>
+          <p style={{ color: th.muted, fontSize: 12, margin: "4px 0 0" }}>{pending} {t("tasks_pending")}</p>
         </div>
         <div style={{ textAlign: "right" }}>
           <p style={{ color: th.accent, fontSize: 24, fontWeight: 700, margin: 0 }}>{done}</p>
-          <p style={{ color: th.muted, fontSize: 9, letterSpacing: 1, margin: 0 }}>ACCOMPLIES</p>
+          <p style={{ color: th.muted, fontSize: 9, letterSpacing: 1, margin: 0 }}>{t("tasks_done_caps")}</p>
         </div>
       </div>
 
@@ -694,7 +1022,7 @@ function TasksPage({ tasks, setTasks, th, ff }) {
         <input
           value={newText} onChange={e => setNewText(e.target.value)}
           onKeyDown={e => e.key === "Enter" && add()}
-          placeholder="Ajouter une intention..."
+          placeholder={t("task_placeholder")}
           style={{
             width: "100%", background: th.bg, border: `1px solid ${th.border}`,
             borderRadius: 8, padding: "10px 14px", color: th.text,
@@ -709,7 +1037,7 @@ function TasksPage({ tasks, setTasks, th, ff }) {
               borderRadius: 8, padding: "9px", cursor: "pointer",
               color: priority === p ? th.accent : th.muted, fontSize: 11, transition: "all 0.15s",
             }}>
-              {p === "haute" ? "⚡ Haute" : "· Normale"}
+              {p === "haute" ? t("prio_high") : t("prio_normal")}
             </button>
           ))}
           <button onClick={add} style={{
@@ -721,7 +1049,7 @@ function TasksPage({ tasks, setTasks, th, ff }) {
 
       {/* Filters */}
       <div style={{ display: "flex", gap: 7, marginBottom: 16 }}>
-        {[["pending","En attente"], ["today","Aujourd'hui"], ["done","✓ Faites"], ["all","Tout"]].map(([v, l]) => (
+        {[["pending", t("filter_pending")], ["today", t("filter_today")], ["done", t("filter_done")], ["all", t("filter_all")]].map(([v, l]) => (
           <button key={v} onClick={() => setFilter(v)} style={{
             background: filter === v ? th.accent + "22" : "transparent",
             border: `1px solid ${filter === v ? th.accent : th.border}`,
@@ -732,28 +1060,28 @@ function TasksPage({ tasks, setTasks, th, ff }) {
       </div>
 
       {/* Task list */}
-      {filtered.map(t => (
-        <div key={t.id} style={{
+      {filtered.map(t2 => (
+        <div key={t2.id} style={{
           display: "flex", alignItems: "center", gap: 12,
           background: th.surface, border: `1px solid ${th.border}`,
           borderRadius: 12, padding: "13px 14px", marginBottom: 8,
-          opacity: t.done ? 0.5 : 1, transition: "opacity 0.2s",
+          opacity: t2.done ? 0.5 : 1, transition: "opacity 0.2s",
         }}>
-          <button onClick={() => toggle(t.id)} style={{
+          <button onClick={() => toggle(t2.id)} style={{
             width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-            background: t.done ? th.accent : "transparent",
-            border: `2px solid ${t.done ? th.accent : th.muted}`,
+            background: t2.done ? th.accent : "transparent",
+            border: `2px solid ${t2.done ? th.accent : th.muted}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", fontSize: 11, color: t.done ? "#000" : "transparent",
+            cursor: "pointer", fontSize: 11, color: t2.done ? "#000" : "transparent",
           }}>✓</button>
           <span style={{
             flex: 1, color: th.text, fontSize: 13,
-            textDecoration: t.done ? "line-through" : "none",
-          }}>{t.text}</span>
-          {t.priority === "haute" && !t.done && (
+            textDecoration: t2.done ? "line-through" : "none",
+          }}>{t2.text}</span>
+          {t2.priority === "haute" && !t2.done && (
             <span style={{ color: th.accent, fontSize: 12 }}>⚡</span>
           )}
-          <button onClick={() => del(t.id)} style={{
+          <button onClick={() => del(t2.id)} style={{
             background: "none", border: "none",
             color: th.faint, fontSize: 18, cursor: "pointer", lineHeight: 1,
           }}>×</button>
@@ -763,7 +1091,7 @@ function TasksPage({ tasks, setTasks, th, ff }) {
       {filtered.length === 0 && (
         <Card th={th} style={{ textAlign: "center", padding: 30 }}>
           <p style={{ color: th.muted, fontSize: 14, margin: 0 }}>
-            {filter === "done" ? "Rien d'accompli encore — vas-y !" : "Aucune tâche ici ✨"}
+            {filter === "done" ? t("tasks_empty_done") : t("tasks_empty")}
           </p>
         </Card>
       )}
@@ -773,18 +1101,31 @@ function TasksPage({ tasks, setTasks, th, ff }) {
 
 // ─── SETTINGS PAGE ───────────────────────────────────────────────────────────
 
-function SettingsPage({ th, themeIdx, setThemeIdx, fontIdx, setFontIdx, entries, tasks, setLocked, pin, setPin }) {
+function SettingsPage({
+  th, t, lang, setLang, themeIdx, setThemeIdx, fontIdx, setFontIdx,
+  entries, tasks, setLocked, pin, setPin,
+  reminderEnabled, setReminderEnabled, reminderMode, setReminderMode, reminderTime, setReminderTime,
+}) {
   const [pinInput, setPinInput] = useState("");
   const [showPinForm, setShowPinForm] = useState(false);
-  const [reminder, setReminder] = useState("20:00");
   const [flash, setFlash] = useState(false);
+  const notifSupported = typeof window !== "undefined" && "Notification" in window;
+  const [notifPerm, setNotifPerm] = useState(notifSupported ? Notification.permission : "unsupported");
 
   const showSaved = () => { setFlash(true); setTimeout(() => setFlash(false), 2000); };
   const savePin = () => {
     if (pinInput.length >= 4) { setPin(pinInput); setShowPinForm(false); setPinInput(""); showSaved(); }
   };
+  const toggleReminder = async () => {
+    if (reminderEnabled) { setReminderEnabled(false); showSaved(); return; }
+    if (!notifSupported) return;
+    let perm = Notification.permission;
+    if (perm === "default") perm = await Notification.requestPermission();
+    setNotifPerm(perm);
+    if (perm === "granted") { setReminderEnabled(true); showSaved(); }
+  };
   const exportJSON = () => {
-    const data = { exportDate: new Date().toISOString(), entries, tasks };
+    const data = { exportDate: new Date().toISOString(), lang, entries, tasks };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = "aurore-data.json"; a.click();
@@ -793,7 +1134,7 @@ function SettingsPage({ th, themeIdx, setThemeIdx, fontIdx, setFontIdx, entries,
   return (
     <div style={{ padding: "24px 18px 110px", fontFamily: "inherit" }}>
       <h2 style={{ color: th.text, fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, margin: "0 0 24px" }}>
-        Paramètres
+        {t("settings_title")}
       </h2>
 
       {flash && (
@@ -803,28 +1144,43 @@ function SettingsPage({ th, themeIdx, setThemeIdx, fontIdx, setFontIdx, entries,
           color: th.accent, fontSize: 13, textAlign: "center",
           animation: "fadeIn 0.2s ease",
         }}>
-          Sauvegardé ✓
+          {t("saved")}
         </div>
       )}
 
+      {/* Language */}
+      <Label th={th}>{t("lang_label")}</Label>
+      <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+        {LANGS.map(L => (
+          <button key={L.id} onClick={() => { setLang(L.id); showSaved(); }} style={{
+            flex: 1, background: lang === L.id ? th.accent + "22" : th.surface,
+            border: `1px solid ${lang === L.id ? th.accent : th.border}`,
+            borderRadius: 10, padding: "12px 6px",
+            color: lang === L.id ? th.accent : th.muted,
+            fontSize: 13, cursor: "pointer", fontWeight: lang === L.id ? 700 : 400,
+            transition: "all 0.15s",
+          }}>{L.label}</button>
+        ))}
+      </div>
+
       {/* Themes */}
-      <Label th={th}>Thème de l'application</Label>
+      <Label th={th}>{t("theme_label")}</Label>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24 }}>
-        {THEMES.map((t, i) => (
-          <button key={t.name} onClick={() => { setThemeIdx(i); showSaved(); }} style={{
-            background: t.bg, border: `2px solid ${themeIdx === i ? t.accent : t.border}`,
+        {THEMES.map((tm, i) => (
+          <button key={tm.name} onClick={() => { setThemeIdx(i); showSaved(); }} style={{
+            background: tm.bg, border: `2px solid ${themeIdx === i ? tm.accent : tm.border}`,
             borderRadius: 12, padding: "12px 14px", cursor: "pointer",
             display: "flex", alignItems: "center", gap: 10, transition: "border-color 0.2s",
           }}>
-            <div style={{ width: 18, height: 18, borderRadius: "50%", background: t.accent, flexShrink: 0 }} />
-            <span style={{ color: t.text, fontSize: 13 }}>{t.name}</span>
-            {themeIdx === i && <span style={{ color: t.accent, marginLeft: "auto", fontSize: 14 }}>✓</span>}
+            <div style={{ width: 18, height: 18, borderRadius: "50%", background: tm.accent, flexShrink: 0 }} />
+            <span style={{ color: tm.text, fontSize: 13 }}>{t(`theme_${i}`)}</span>
+            {themeIdx === i && <span style={{ color: tm.accent, marginLeft: "auto", fontSize: 14 }}>✓</span>}
           </button>
         ))}
       </div>
 
       {/* Fonts */}
-      <Label th={th}>Police de caractères</Label>
+      <Label th={th}>{t("font_label")}</Label>
       <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
         {FONTS.map((f, i) => (
           <button key={f.name} onClick={() => { setFontIdx(i); showSaved(); }} style={{
@@ -839,34 +1195,65 @@ function SettingsPage({ th, themeIdx, setThemeIdx, fontIdx, setFontIdx, entries,
       </div>
 
       {/* Reminder */}
-      <Label th={th}>Rappel quotidien</Label>
-      <Card th={th} style={{ marginBottom: 24, display: "flex", alignItems: "center", gap: 14 }}>
-        <span style={{ fontSize: 22 }}>🔔</span>
-        <input type="time" value={reminder} onChange={e => setReminder(e.target.value)} style={{
-          flex: 1, background: th.bg, border: `1px solid ${th.border}`,
-          borderRadius: 8, padding: "9px 12px", color: th.text, fontSize: 14,
-        }} />
-        <Btn onClick={showSaved} variant="primary" th={th} style={{ padding: "9px 14px", fontSize: 12 }}>Sauver</Btn>
+      <Label th={th}>{t("reminder_label")}</Label>
+      <Card th={th} style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+          <span style={{ fontSize: 22 }}>🔔</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ color: th.text, fontSize: 14, margin: 0 }}>{t("reminder_label")}</p>
+            <p style={{ color: notifPerm === "denied" ? "#E05050" : th.muted, fontSize: 11, margin: "3px 0 0" }}>
+              {!notifSupported ? t("reminder_unsupported")
+                : notifPerm === "denied" ? t("reminder_denied")
+                : reminderEnabled ? t("reminder_on")
+                : t("reminder_hint")}
+            </p>
+          </div>
+          <Btn onClick={toggleReminder} variant={reminderEnabled ? "primary" : "ghost"} th={th} style={{ fontSize: 11, padding: "8px 12px" }}>
+            {reminderEnabled ? "ON" : t("activate")}
+          </Btn>
+        </div>
+
+        {reminderEnabled && (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              {[["daily", t("reminder_daily")], ["hourly", t("reminder_hourly")]].map(([v, l]) => (
+                <button key={v} onClick={() => { setReminderMode(v); showSaved(); }} style={{
+                  flex: 1, background: reminderMode === v ? th.accent + "22" : "transparent",
+                  border: `1px solid ${reminderMode === v ? th.accent : th.border}`,
+                  borderRadius: 8, padding: "9px", cursor: "pointer",
+                  color: reminderMode === v ? th.accent : th.muted, fontSize: 12,
+                }}>{l}</button>
+              ))}
+            </div>
+            {reminderMode === "daily" && (
+              <input type="time" value={reminderTime} onChange={e => { setReminderTime(e.target.value); showSaved(); }} style={{
+                width: "100%", background: th.bg, border: `1px solid ${th.border}`,
+                borderRadius: 8, padding: "9px 12px", color: th.text, fontSize: 14,
+                boxSizing: "border-box", colorScheme: "dark",
+              }} />
+            )}
+          </>
+        )}
       </Card>
 
       {/* Privacy */}
-      <Label th={th}>Confidentialité</Label>
+      <Label th={th}>{t("privacy_label")}</Label>
       <Card th={th} style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: showPinForm ? 16 : 0 }}>
           <div>
-            <p style={{ color: th.text, fontSize: 14, margin: 0 }}>Verrouillage par code PIN</p>
+            <p style={{ color: th.text, fontSize: 14, margin: 0 }}>{t("pin_title")}</p>
             <p style={{ color: th.muted, fontSize: 11, margin: "3px 0 0" }}>
-              {pin ? "🔒 Code actif" : "Non configuré"}
+              {pin ? t("pin_active") : t("pin_none")}
             </p>
           </div>
           <Btn onClick={() => setShowPinForm(!showPinForm)} variant="ghost" th={th} style={{ fontSize: 11, padding: "7px 12px" }}>
-            {pin ? "Modifier" : "Activer"}
+            {pin ? t("modify") : t("activate")}
           </Btn>
         </div>
         {showPinForm && (
           <>
             <input
-              type="password" placeholder="Code PIN (min. 4 chiffres)"
+              type="password" placeholder={t("pin_placeholder")}
               value={pinInput} onChange={e => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
               style={{
                 width: "100%", background: th.bg, border: `1px solid ${th.border}`,
@@ -876,7 +1263,7 @@ function SettingsPage({ th, themeIdx, setThemeIdx, fontIdx, setFontIdx, entries,
               }}
             />
             <Btn onClick={savePin} variant="primary" th={th} style={{ width: "100%", padding: "11px", fontSize: 14 }}>
-              Confirmer le code
+              {t("pin_confirm")}
             </Btn>
           </>
         )}
@@ -886,26 +1273,26 @@ function SettingsPage({ th, themeIdx, setThemeIdx, fontIdx, setFontIdx, entries,
             borderRadius: 8, padding: "8px 16px", color: th.muted,
             fontSize: 12, cursor: "pointer", marginTop: 12, width: "100%",
           }}>
-            🔒 Verrouiller l'application maintenant
+            {t("lock_now")}
           </button>
         )}
       </Card>
 
       {/* Export */}
-      <Label th={th}>Exporter mes données</Label>
+      <Label th={th}>{t("export_label")}</Label>
       <div style={{ display: "flex", gap: 10, marginBottom: 40 }}>
         <button onClick={exportJSON} style={{
           flex: 1, background: th.surface, border: `1px solid ${th.border}`,
           borderRadius: 12, padding: "13px", color: th.text, fontSize: 13, cursor: "pointer",
-        }}>📦 Exporter en JSON</button>
+        }}>{t("export_json")}</button>
       </div>
 
       {/* Branding */}
       <div style={{ textAlign: "center", paddingTop: 10 }}>
         <p style={{ color: th.accent, fontFamily: "Georgia, serif", fontSize: 16, letterSpacing: 5, margin: "0 0 4px" }}>AURORE</p>
-        <p style={{ color: th.muted, fontSize: 10, letterSpacing: 4, margin: "0 0 8px" }}>THE CLUB · v1.0</p>
+        <p style={{ color: th.muted, fontSize: 10, letterSpacing: 4, margin: "0 0 8px" }}>{t("club")} · v1.0</p>
         <p style={{ color: th.faint, fontSize: 10, margin: 0 }}>
-          Projet de Marketing Digital
+          {t("project_credit")}
         </p>
       </div>
     </div>
@@ -917,6 +1304,7 @@ function SettingsPage({ th, themeIdx, setThemeIdx, fontIdx, setFontIdx, entries,
 export default function AuroreApp() {
   const [splash, setSplash] = useState(true);
   const [page, setPage] = useState("home");
+  const [lang, setLang] = usePersistentState("lang", "fr");
   const [themeIdx, setThemeIdx] = usePersistentState("themeIdx", 0);
   const [fontIdx, setFontIdx] = usePersistentState("fontIdx", 0);
   const [entries, setEntries] = usePersistentState("entries", SAMPLE_ENTRIES);
@@ -928,23 +1316,64 @@ export default function AuroreApp() {
   const [locked, setLocked] = useState(() => !!readStored("pin", ""));
   const [pinError, setPinError] = useState(false);
 
-  const th = THEMES[themeIdx];
-  const ff = FONTS[fontIdx].family;
+  // Reminder settings
+  const [reminderEnabled, setReminderEnabled] = usePersistentState("reminderEnabled", false);
+  const [reminderMode, setReminderMode] = usePersistentState("reminderMode", "daily");
+  const [reminderTime, setReminderTime] = usePersistentState("reminderTime", "20:00");
 
-  // Dismiss splash after 2.8s
+  const th = THEMES[themeIdx] || THEMES[0];
+  const ff = (FONTS[fontIdx] || FONTS[0]).family;
+  const t = makeT(lang);
+
+  // Dismiss the splash after 2.8s (effect, so it runs once — not on every render).
+  useEffect(() => {
+    const timer = setTimeout(() => setSplash(false), 2800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Reminder scheduler. Notifications fire while the app is open (a true
+  // background push would require a service worker + push server).
+  useEffect(() => {
+    if (!reminderEnabled) return;
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    let timer;
+    const fire = () => {
+      try { new Notification("AURORE — The Club", { body: t("reminder_body") || t("reminder_label") }); } catch { /* noop */ }
+    };
+    const scheduleDaily = () => {
+      const now = new Date();
+      const [h, m] = reminderTime.split(":").map(Number);
+      const next = new Date(now);
+      next.setHours(h || 0, m || 0, 0, 0);
+      if (next <= now) next.setDate(next.getDate() + 1);
+      timer = setTimeout(() => { fire(); scheduleDaily(); }, next - now);
+    };
+    const scheduleHourly = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(now.getHours() + 1, 0, 0, 0);
+      timer = setTimeout(() => { fire(); scheduleHourly(); }, next - now);
+    };
+    if (reminderMode === "hourly") scheduleHourly(); else scheduleDaily();
+    return () => clearTimeout(timer);
+  }, [reminderEnabled, reminderMode, reminderTime, lang]);
+
+  const baseStyles = `
+    @keyframes orbPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.07);opacity:.88} }
+    @keyframes splashFade { 0%{opacity:0;transform:translateY(20px)} 30%{opacity:1;transform:translateY(0)} 80%{opacity:1} 100%{opacity:0} }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+    ::-webkit-scrollbar{width:0;background:transparent}
+    input,textarea,select{outline:none}
+  `;
+
   if (splash) {
-    setTimeout(() => setSplash(false), 2800);
     return (
       <div style={{ background: th.bg, minHeight: "100vh", fontFamily: ff }}>
-        <style>{`
-          @keyframes orbPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.07);opacity:.88} }
-          @keyframes splashFade { 0%{opacity:0;transform:translateY(20px)} 30%{opacity:1;transform:translateY(0)} 80%{opacity:1} 100%{opacity:0} }
-          @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-          *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
-          ::-webkit-scrollbar{width:0}
-          input,textarea{outline:none}
-        `}</style>
-        <SplashScreen th={th} />
+        <style>{baseStyles}</style>
+        <SplashScreen th={th} t={t} />
       </div>
     );
   }
@@ -952,8 +1381,8 @@ export default function AuroreApp() {
   if (locked && pin) {
     return (
       <div style={{ background: th.bg, fontFamily: ff }}>
-        <style>{`@keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}`}</style>
-        <LockScreen th={th} error={pinError} onUnlock={(p) => {
+        <style>{baseStyles}</style>
+        <LockScreen th={th} t={t} error={pinError} onUnlock={(p) => {
           if (p === pin) { setLocked(false); setPinError(false); }
           else setPinError(true);
         }} />
@@ -962,48 +1391,46 @@ export default function AuroreApp() {
   }
 
   const nav = [
-    { id: "home",     icon: "☀️", label: "Accueil"    },
-    { id: "journal",  icon: "📖", label: "Journal"    },
-    { id: "calendar", icon: "🗓",  label: "Calendrier" },
-    { id: "wall",     icon: "🌅", label: "Polaroid"   },
-    { id: "tasks",    icon: "✓",  label: "À faire"    },
-    { id: "settings", icon: "⚙",  label: "Réglages"   },
+    { id: "home",     icon: "☀️", label: t("nav_home")     },
+    { id: "journal",  icon: "📖", label: t("nav_journal")  },
+    { id: "calendar", icon: "🗓",  label: t("nav_calendar") },
+    { id: "wall",     icon: "🌅", label: t("nav_wall")     },
+    { id: "tasks",    icon: "✓",  label: t("nav_tasks")    },
+    { id: "settings", icon: "⚙",  label: t("nav_settings") },
   ];
 
   return (
     <div style={{ background: th.bg, minHeight: "100vh", fontFamily: ff, color: th.text }}>
-      <style>{`
-        @keyframes orbPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.07);opacity:.88} }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-        *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
-        ::-webkit-scrollbar{width:0;background:transparent}
-        input,textarea,select{outline:none}
-      `}</style>
+      <style>{baseStyles}</style>
 
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
-        <div style={{ animation: "fadeIn 0.3s ease" }}>
+        <div key={page + lang} style={{ animation: "fadeIn 0.3s ease" }}>
           {page === "home" && (
             <HomePage
-              entries={entries} tasks={tasks} th={th} ff={ff}
+              entries={entries} tasks={tasks} th={th} ff={ff} lang={lang} t={t}
               currentMood={currentMood} setCurrentMood={setCurrentMood}
               onNewEntry={() => { setShowNew(true); setPage("journal"); }}
             />
           )}
           {page === "journal" && (
             <JournalPage
-              entries={entries} setEntries={setEntries} th={th} ff={ff}
+              entries={entries} setEntries={setEntries} th={th} ff={ff} lang={lang} t={t}
               showNew={showNew} setShowNew={setShowNew}
             />
           )}
-          {page === "calendar" && <CalendarPage entries={entries} th={th} ff={ff} />}
-          {page === "wall"     && <PolaroidPage entries={entries} th={th} ff={ff} />}
-          {page === "tasks"    && <TasksPage tasks={tasks} setTasks={setTasks} th={th} ff={ff} />}
+          {page === "calendar" && <CalendarPage entries={entries} th={th} ff={ff} lang={lang} t={t} />}
+          {page === "wall"     && <PolaroidPage entries={entries} th={th} ff={ff} lang={lang} t={t} />}
+          {page === "tasks"    && <TasksPage tasks={tasks} setTasks={setTasks} th={th} ff={ff} lang={lang} t={t} />}
           {page === "settings" && (
             <SettingsPage
-              th={th} themeIdx={themeIdx} setThemeIdx={setThemeIdx}
+              th={th} t={t} lang={lang} setLang={setLang}
+              themeIdx={themeIdx} setThemeIdx={setThemeIdx}
               fontIdx={fontIdx} setFontIdx={setFontIdx}
               entries={entries} tasks={tasks}
               setLocked={setLocked} pin={pin} setPin={setPin}
+              reminderEnabled={reminderEnabled} setReminderEnabled={setReminderEnabled}
+              reminderMode={reminderMode} setReminderMode={setReminderMode}
+              reminderTime={reminderTime} setReminderTime={setReminderTime}
             />
           )}
         </div>
