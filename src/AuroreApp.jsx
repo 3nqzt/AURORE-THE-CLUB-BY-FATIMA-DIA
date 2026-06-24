@@ -1128,18 +1128,13 @@ function PolaroidPage({ entries, th, ff, lang, t }) {
           const m = getMood(e.mood);
           const angle = angles[i % angles.length];
           return (
-            <div key={e.id} style={{
+            <div key={e.id} className="aurore-polaroid" style={{
               breakInside: "avoid", marginBottom: 14,
               background: "#FAF5EF", borderRadius: 3,
               padding: "10px 10px 30px",
               transform: `rotate(${angle}deg)`,
               boxShadow: "0 6px 28px rgba(0,0,0,0.65)",
-              transition: "transform 0.25s ease, box-shadow 0.25s ease",
-              cursor: "pointer",
-            }}
-            onMouseEnter={ev => { ev.currentTarget.style.transform = `rotate(0deg) scale(1.04)`; ev.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.8)"; }}
-            onMouseLeave={ev => { ev.currentTarget.style.transform = `rotate(${angle}deg)`; ev.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.65)"; }}
-            >
+            }}>
               {e.photo ? (
                 <img src={e.photo} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 2, marginBottom: 9, display: "block" }} />
               ) : (
@@ -1543,8 +1538,9 @@ export default function AuroreApp() {
     if (Notification.permission !== "granted") return;
 
     let timer;
+    const body = (STRINGS[lang] && STRINGS[lang].reminder_body) || STRINGS.fr.reminder_body;
     const fire = () => {
-      try { new Notification("AURORE — The Club", { body: t("reminder_body") || t("reminder_label") }); } catch { /* noop */ }
+      try { new Notification("AURORE — The Club", { body }); } catch { /* noop */ }
     };
     const scheduleDaily = () => {
       const now = new Date();
@@ -1572,6 +1568,8 @@ export default function AuroreApp() {
     ::-webkit-scrollbar{width:0;background:transparent}
     :focus:not(:focus-visible){outline:none}
     :focus-visible{outline:2px solid ${th.accent};outline-offset:2px;border-radius:6px}
+    .aurore-polaroid{transition:transform .25s ease, box-shadow .25s ease;cursor:pointer}
+    .aurore-polaroid:hover{transform:rotate(0deg) scale(1.04)!important;box-shadow:0 12px 40px rgba(0,0,0,.8)!important;position:relative;z-index:2}
     @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
   `;
 
