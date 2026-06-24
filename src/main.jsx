@@ -1,9 +1,12 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import AuroreApp from "./AuroreApp.jsx";
+import ErrorBoundary from "./ErrorBoundary.jsx";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AuroreApp />
+    <ErrorBoundary>
+      <AuroreApp />
+    </ErrorBoundary>
   </React.StrictMode>
 );

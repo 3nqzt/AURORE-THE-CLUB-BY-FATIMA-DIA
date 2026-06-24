@@ -45,6 +45,17 @@ sable. L'identité reste **minimaliste, jeune et lumineuse**.
 - **Typographie** — *Fraunces* (serif éditorial) pour les titres et le logotype,
   *Inter* (sans moderne) pour le corps du texte.
 
+## ♿ Accessibilité & performance
+
+- **Accessibilité** — zoom autorisé, focus clavier visible, `aria-label` sur les
+  boutons à icône, repères `<main>` / `<nav>`, langue du document synchronisée
+  (FR/Wolof), et respect de `prefers-reduced-motion`.
+- **Performance** — la carte (Leaflet) est chargée à la demande (code-splitting),
+  ce qui réduit fortement le poids initial ; les images sont en chargement
+  différé (`loading="lazy"`).
+- **Robustesse** — un *error boundary* affiche un écran de secours au lieu d'une
+  page blanche, et l'**ESLint** (avec `jsx-a11y`) tourne dans la CI.
+
 ## 🛠️ Stack technique
 
 - [React 18](https://react.dev/)

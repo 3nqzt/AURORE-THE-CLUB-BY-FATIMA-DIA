@@ -1,6 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
+
+// Leaflet map UI is code-split into ./maps.jsx and loaded on demand, so the
+// map library stays out of the initial bundle.
+const MapPage = lazy(() => import("./maps.jsx").then(m => ({ default: m.MapPage })));
+const LocationPicker = lazy(() => import("./maps.jsx").then(m => ({ default: m.LocationPicker })));
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -71,6 +74,9 @@ const STRINGS = {
     loading: "Chargement de ton espace…",
     lock_enter: "Entre ton code PIN",
     lock_wrong: "Code incorrect — réessaie",
+    close: "Fermer", delete: "Supprimer",
+    prev_month: "Mois précédent", next_month: "Mois suivant",
+    lock_backspace: "Effacer le dernier chiffre",
 
     nav_home: "Accueil", nav_journal: "Journal", nav_calendar: "Calendrier",
     nav_map: "Carte", nav_wall: "Polaroid", nav_tasks: "À faire", nav_settings: "Réglages",
@@ -170,6 +176,9 @@ const STRINGS = {
     loading: "Sa espace mu ngi ñëw…",
     lock_enter: "Dugalal sa code PIN",
     lock_wrong: "Code bi baaxul — jéemaat",
+    close: "Tëj", delete: "Far",
+    prev_month: "Weer wu jiitu", next_month: "Weer wu topp",
+    lock_backspace: "Far chiffre bu mujj bi",
 
     nav_home: "Kër", nav_journal: "Surnaal", nav_calendar: "Arminaat",
     nav_map: "Kàrt", nav_wall: "Polaroid", nav_tasks: "Liggéey", nav_settings: "Tànneef",
@@ -318,20 +327,6 @@ const makeT = (lang) => (key) => {
   const table = STRINGS[lang] || STRINGS.fr;
   return table[key] != null ? table[key] : (STRINGS.fr[key] != null ? STRINGS.fr[key] : key);
 };
-const escapeHtml = (s = "") => s.replace(/[&<>"']/g, c => (
-  { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-));
-
-// Default centre of the map: Dakar, Senegal.
-const DAKAR = [14.6928, -17.4467];
-
-// Teardrop Leaflet marker carrying a mood colour + emoji (avoids the broken
-// default-icon-path issue with bundlers, since we render our own HTML).
-const makePinIcon = (color, emoji) => L.divIcon({
-  className: "aurore-pin",
-  html: `<div style="width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px;line-height:1">${emoji}</span></div>`,
-  iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30],
-});
 // Count + word, e.g. "3 entrées" / "3 mbind".
 const countLabel = (n, lang, t) =>
   lang === "fr" ? `${n} ${n > 1 ? t("entries_word") : t("entry_word")}` : `${n} ${t("entries_word")}`;
@@ -473,41 +468,6 @@ function SunsetGlow({ th, variant = "ambient" }) {
   return <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: bg }} />;
 }
 
-// Small interactive map to pick one location for a journal entry.
-// Tap the map (or drag the pin) to set coordinates; reports them via onChange.
-function LocationPicker({ value, onChange, th }) {
-  const elRef = useRef(null);
-  const markerRef = useRef(null);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-
-  useEffect(() => {
-    const hasVal = value && value.lat != null;
-    const map = L.map(elRef.current, { scrollWheelZoom: false })
-      .setView(hasVal ? [value.lat, value.lng] : DAKAR, hasVal ? 14 : 12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, attribution: "© OpenStreetMap",
-    }).addTo(map);
-
-    const place = (lat, lng) => {
-      if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
-      else {
-        markerRef.current = L.marker([lat, lng], { draggable: true, icon: makePinIcon(th.accent, "📍") })
-          .addTo(map)
-          .on("dragend", (e) => { const ll = e.target.getLatLng(); onChangeRef.current({ lat: ll.lat, lng: ll.lng }); });
-      }
-    };
-    if (hasVal) place(value.lat, value.lng);
-    map.on("click", (e) => { place(e.latlng.lat, e.latlng.lng); onChangeRef.current({ lat: e.latlng.lat, lng: e.latlng.lng }); });
-
-    const sizer = setTimeout(() => map.invalidateSize(), 60);
-    return () => { clearTimeout(sizer); map.remove(); markerRef.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return <div ref={elRef} style={{ height: 190, borderRadius: 12, overflow: "hidden", border: `1px solid ${th.border}`, marginBottom: 10 }} />;
-}
-
 // ─── SPLASH SCREEN ───────────────────────────────────────────────────────────
 
 function SplashScreen({ th, t }) {
@@ -575,6 +535,9 @@ function LockScreen({ onUnlock, error, th, t }) {
         {[1,2,3,4,5,6,7,8,9,"","0","⌫"].map((d, i) => (
           <button key={i}
             onClick={() => (typeof d === "number" || d === "0") ? hit(String(d)) : d === "⌫" && setVal(v => v.slice(0,-1))}
+            disabled={d === ""}
+            aria-hidden={d === "" ? true : undefined}
+            aria-label={d === "⌫" ? t("lock_backspace") : undefined}
             style={{
               height: 58, background: d === "" ? "transparent" : th.surface,
               border: d === "" ? "none" : `1px solid ${th.border}`,
@@ -615,7 +578,7 @@ function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood
           </h1>
           <p style={{ color: th.muted, fontSize: 9, letterSpacing: 5, margin: "2px 0 0" }}>{t("club")}</p>
         </div>
-        <button onClick={onNewEntry} style={{
+        <button onClick={onNewEntry} aria-label={t("new_moment")} style={{
           width: 48, height: 48, borderRadius: "50%",
           background: `linear-gradient(140deg, ${th.accentSoft}, ${th.accent})`,
           border: "none", color: "#fff", fontSize: 22, cursor: "pointer",
@@ -632,7 +595,7 @@ function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood
         </div>
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 10 }}>
           {MOODS.map(m => (
-            <button key={m.v} onClick={() => setCurrentMood(m.v)} style={{
+            <button key={m.v} onClick={() => setCurrentMood(m.v)} aria-label={t(`mood_${m.v}`)} aria-pressed={currentMood === m.v} style={{
               width: 44, height: 44, borderRadius: "50%", fontSize: 20, cursor: "pointer",
               background: currentMood === m.v ? m.c + "44" : "transparent",
               border: `2px solid ${currentMood === m.v ? m.c : "transparent"}`,
@@ -704,7 +667,7 @@ function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood
               <span style={{ color: th.muted, fontSize: 11, marginLeft: "auto" }}>{e.time}</span>
             </div>
             {e.photo && (
-              <img src={e.photo} alt="" style={{ width: "100%", maxHeight: 150, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />
+              <img src={e.photo} alt="" loading="lazy" decoding="async" style={{ width: "100%", maxHeight: 150, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />
             )}
             <p style={{ color: th.text, fontSize: 13, lineHeight: 1.6, margin: "0 0 6px" }}>
               {e.text.length > 95 ? e.text.slice(0, 95) + "…" : e.text}
@@ -854,13 +817,13 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
               <h3 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 18, margin: 0 }}>{t("new_moment")}</h3>
-              <button onClick={() => { resetForm(); setShowNew(false); }} style={{ background: "none", border: "none", color: th.muted, fontSize: 22, cursor: "pointer" }}>✕</button>
+              <button onClick={() => { resetForm(); setShowNew(false); }} aria-label={t("close")} style={{ background: "none", border: "none", color: th.muted, fontSize: 22, cursor: "pointer" }}>✕</button>
             </div>
 
             <Label th={th}>{t("mood_now")}</Label>
             <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
               {MOODS.map(m => (
-                <button key={m.v} onClick={() => setMood(m.v)} style={{
+                <button key={m.v} onClick={() => setMood(m.v)} aria-label={t(`mood_${m.v}`)} aria-pressed={mood === m.v} style={{
                   flex: 1, padding: "11px 4px", borderRadius: 12, fontSize: 22, cursor: "pointer",
                   background: mood === m.v ? m.c + "44" : th.bg,
                   border: `2px solid ${mood === m.v ? m.c : th.border}`,
@@ -920,8 +883,10 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
             ) : (
               <div style={{ marginBottom: 20 }}>
                 <p style={{ color: th.muted, fontSize: 11, margin: "-4px 0 8px" }}>{t("location_hint")}</p>
-                <LocationPicker key={locKey} value={place} th={th}
-                  onChange={(c) => setPlace(p => ({ ...(p || {}), lat: c.lat, lng: c.lng }))} />
+                <Suspense fallback={<div style={{ height: 190, borderRadius: 12, border: `1px solid ${th.border}`, marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center", color: th.muted, fontSize: 12 }}>…</div>}>
+                  <LocationPicker key={locKey} value={place} th={th}
+                    onChange={(c) => setPlace(p => ({ ...(p || {}), lat: c.lat, lng: c.lng }))} />
+                </Suspense>
                 <input
                   value={place?.label || ""}
                   onChange={e => setPlace(p => ({ ...(p || {}), label: e.target.value }))}
@@ -952,7 +917,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
                     padding: "4px 6px 4px 9px", fontSize: 12, color: th.text,
                   }}>
                     <span>{getMood(p.mood).e}</span><span>{p.time}</span>
-                    <button onClick={() => removeTl(i)} style={{ background: "none", border: "none", color: th.faint, cursor: "pointer", fontSize: 15, lineHeight: 1 }}>×</button>
+                    <button onClick={() => removeTl(i)} aria-label={t("remove_photo")} style={{ background: "none", border: "none", color: th.faint, cursor: "pointer", fontSize: 15, lineHeight: 1 }}>×</button>
                   </span>
                 ))}
               </div>
@@ -964,14 +929,14 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
               }} />
               <div style={{ display: "flex", gap: 3, flex: 1 }}>
                 {MOODS.map(m => (
-                  <button key={m.v} onClick={() => setTlMood(m.v)} style={{
+                  <button key={m.v} onClick={() => setTlMood(m.v)} aria-label={t(`mood_${m.v}`)} aria-pressed={tlMood === m.v} style={{
                     flex: 1, padding: "6px 0", borderRadius: 8, fontSize: 16, cursor: "pointer",
                     background: tlMood === m.v ? m.c + "44" : th.bg,
                     border: `1px solid ${tlMood === m.v ? m.c : th.border}`,
                   }}>{m.e}</button>
                 ))}
               </div>
-              <button onClick={addTl} style={{
+              <button onClick={addTl} aria-label={t("timeline_label")} style={{
                 background: th.accent, border: "none", borderRadius: 8,
                 padding: "7px 12px", color: "#000", fontSize: 16, cursor: "pointer",
               }}>+</button>
@@ -980,7 +945,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
             <Label th={th}>{t("emojis_label")} ({selEmojis.length}/5)</Label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
               {EMOJIS.map(e => (
-                <button key={e} onClick={() => toggleEmoji(e)} style={{
+                <button key={e} onClick={() => toggleEmoji(e)} aria-label={e} aria-pressed={selEmojis.includes(e)} style={{
                   background: selEmojis.includes(e) ? th.accent + "44" : th.bg,
                   border: `1px solid ${selEmojis.includes(e) ? th.accent : th.border}`,
                   borderRadius: 8, padding: "6px 8px", fontSize: 19, cursor: "pointer",
@@ -1033,7 +998,7 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
               <span style={{ color: th.muted, fontSize: 11, marginLeft: "auto" }}>{e.time}</span>
             </div>
             {e.photo && (
-              <img src={e.photo} alt="" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />
+              <img src={e.photo} alt="" loading="lazy" decoding="async" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />
             )}
             {e.text && <p style={{ color: th.text, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{e.text}</p>}
             {e.emojis.length > 0 && <p style={{ margin: "10px 0 0", fontSize: 18 }}>{e.emojis.join(" ")}</p>}
@@ -1075,9 +1040,9 @@ function CalendarPage({ entries, th, ff, lang, t }) {
       </h2>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <button onClick={prevMo} style={{ background: th.surface, border: `1px solid ${th.border}`, borderRadius: 8, padding: "7px 16px", color: th.text, cursor: "pointer", fontSize: 16 }}>‹</button>
+        <button onClick={prevMo} aria-label={t("prev_month")} style={{ background: th.surface, border: `1px solid ${th.border}`, borderRadius: 8, padding: "7px 16px", color: th.text, cursor: "pointer", fontSize: 16 }}>‹</button>
         <p style={{ color: th.text, fontWeight: 600, fontSize: 15, margin: 0 }}>{MONTHS[mo]} {yr}</p>
-        <button onClick={nextMo} style={{ background: th.surface, border: `1px solid ${th.border}`, borderRadius: 8, padding: "7px 16px", color: th.text, cursor: "pointer", fontSize: 16 }}>›</button>
+        <button onClick={nextMo} aria-label={t("next_month")} style={{ background: th.surface, border: `1px solid ${th.border}`, borderRadius: 8, padding: "7px 16px", color: th.text, cursor: "pointer", fontSize: 16 }}>›</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 6 }}>
@@ -1176,7 +1141,7 @@ function PolaroidPage({ entries, th, ff, lang, t }) {
             onMouseLeave={ev => { ev.currentTarget.style.transform = `rotate(${angle}deg)`; ev.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.65)"; }}
             >
               {e.photo ? (
-                <img src={e.photo} alt="" style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 2, marginBottom: 9, display: "block" }} />
+                <img src={e.photo} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 2, marginBottom: 9, display: "block" }} />
               ) : (
                 <div style={{
                   height: 92, borderRadius: 2, marginBottom: 9,
@@ -1202,67 +1167,9 @@ function PolaroidPage({ entries, th, ff, lang, t }) {
   );
 }
 
-// ─── MAP PAGE ────────────────────────────────────────────────────────────────
-
-function MapPage({ entries, th, ff, lang, t }) {
-  const elRef = useRef(null);
-  const placed = entries.filter(e => e.place && e.place.lat != null);
-
-  useEffect(() => {
-    if (!elRef.current) return;
-    const map = L.map(elRef.current).setView(DAKAR, 12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, attribution: "© OpenStreetMap",
-    }).addTo(map);
-
-    // Oldest → newest, so the connecting line traces the journey in order.
-    const sorted = [...placed].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-    const latlngs = [];
-    sorted.forEach(e => {
-      const m = getMood(e.mood);
-      const mk = L.marker([e.place.lat, e.place.lng], { icon: makePinIcon(m.c, m.e) }).addTo(map);
-      const name = e.place.label ? `<b>${escapeHtml(e.place.label)}</b><br>` : "";
-      const snippet = escapeHtml((e.text || "").slice(0, 90));
-      mk.bindPopup(`${name}<span style="opacity:.7">${formatDate(e.date, lang)} · ${e.time}</span><br>${snippet}`);
-      latlngs.push([e.place.lat, e.place.lng]);
-    });
-    if (latlngs.length > 1) {
-      L.polyline(latlngs, { color: th.accent, weight: 2, dashArray: "5,7", opacity: 0.75 }).addTo(map);
-    }
-    if (latlngs.length) map.fitBounds(latlngs, { padding: [40, 40], maxZoom: 15 });
-
-    const sizer = setTimeout(() => map.invalidateSize(), 60);
-    return () => { clearTimeout(sizer); map.remove(); };
-  }, [entries, lang, th.accent]);
-
-  return (
-    <div style={{ padding: "24px 18px 110px", fontFamily: ff }}>
-      <h2 style={{ color: th.text, fontFamily: HEAD_FONT, fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
-        {t("map_title")} ✦
-      </h2>
-      <p style={{ color: th.muted, fontSize: 13, margin: "0 0 16px" }}>{t("map_sub")}</p>
-
-      {placed.length === 0 && (
-        <Card th={th} style={{ textAlign: "center", padding: 24, marginBottom: 14 }}>
-          <p style={{ fontSize: 30, margin: "0 0 10px" }}>🗺️</p>
-          <p style={{ color: th.muted, fontSize: 14, margin: 0 }}>{t("map_empty")}</p>
-        </Card>
-      )}
-
-      <div ref={elRef} style={{ height: 440, borderRadius: 16, overflow: "hidden", border: `1px solid ${th.border}` }} />
-
-      {placed.length > 0 && (
-        <p style={{ color: th.muted, fontSize: 11, margin: "12px 2px 0" }}>
-          {placed.length} {t("places_word")}
-        </p>
-      )}
-    </div>
-  );
-}
-
 // ─── TASKS PAGE ──────────────────────────────────────────────────────────────
 
-function TasksPage({ tasks, setTasks, th, ff, lang, t }) {
+function TasksPage({ tasks, setTasks, th, ff, t }) {
   const [newText, setNewText] = useState("");
   const [priority, setPriority] = useState("normale");
   const [filter, setFilter] = useState("pending");
@@ -1361,7 +1268,7 @@ function TasksPage({ tasks, setTasks, th, ff, lang, t }) {
           borderRadius: 12, padding: "13px 14px", marginBottom: 8,
           opacity: t2.done ? 0.5 : 1, transition: "opacity 0.2s",
         }}>
-          <button onClick={() => toggle(t2.id)} style={{
+          <button onClick={() => toggle(t2.id)} aria-label={t2.text} aria-pressed={t2.done} style={{
             width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
             background: t2.done ? th.accent : "transparent",
             border: `2px solid ${t2.done ? th.accent : th.muted}`,
@@ -1375,7 +1282,7 @@ function TasksPage({ tasks, setTasks, th, ff, lang, t }) {
           {t2.priority === "haute" && !t2.done && (
             <span style={{ color: th.accent, fontSize: 12 }}>⚡</span>
           )}
-          <button onClick={() => del(t2.id)} style={{
+          <button onClick={() => del(t2.id)} aria-label={t("delete")} style={{
             background: "none", border: "none",
             color: th.faint, fontSize: 18, cursor: "pointer", lineHeight: 1,
           }}>×</button>
@@ -1625,6 +1532,9 @@ export default function AuroreApp() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Keep the document language in sync for screen readers / accessibility.
+  useEffect(() => { document.documentElement.lang = lang; }, [lang]);
+
   // Reminder scheduler. Notifications fire while the app is open (a true
   // background push would require a service worker + push server).
   useEffect(() => {
@@ -1660,7 +1570,9 @@ export default function AuroreApp() {
     @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
     *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
     ::-webkit-scrollbar{width:0;background:transparent}
-    input,textarea,select{outline:none}
+    :focus:not(:focus-visible){outline:none}
+    :focus-visible{outline:2px solid ${th.accent};outline-offset:2px;border-radius:6px}
+    @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
   `;
 
   if (splash) {
@@ -1699,7 +1611,7 @@ export default function AuroreApp() {
       <style>{baseStyles}</style>
       <SunsetGlow th={th} />
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
+      <main style={{ position: "relative", zIndex: 1, maxWidth: 480, margin: "0 auto", minHeight: "100vh" }}>
         <div key={page + lang} style={{ animation: "fadeIn 0.3s ease" }}>
           {page === "home" && (
             <HomePage
@@ -1715,9 +1627,13 @@ export default function AuroreApp() {
             />
           )}
           {page === "calendar" && <CalendarPage entries={entries} th={th} ff={ff} lang={lang} t={t} />}
-          {page === "map"      && <MapPage entries={entries} th={th} ff={ff} lang={lang} t={t} />}
+          {page === "map" && (
+            <Suspense fallback={<div style={{ padding: "60px 18px", textAlign: "center", color: th.muted, fontSize: 13 }}>…</div>}>
+              <MapPage entries={entries} th={th} ff={ff} lang={lang} t={t} getMood={getMood} formatDate={formatDate} />
+            </Suspense>
+          )}
           {page === "wall"     && <PolaroidPage entries={entries} th={th} ff={ff} lang={lang} t={t} />}
-          {page === "tasks"    && <TasksPage tasks={tasks} setTasks={setTasks} th={th} ff={ff} lang={lang} t={t} />}
+          {page === "tasks"    && <TasksPage tasks={tasks} setTasks={setTasks} th={th} ff={ff} t={t} />}
           {page === "settings" && (
             <SettingsPage
               th={th} t={t} lang={lang} setLang={setLang}
@@ -1731,10 +1647,10 @@ export default function AuroreApp() {
             />
           )}
         </div>
-      </div>
+      </main>
 
       {/* Bottom navigation */}
-      <div style={{
+      <nav aria-label="Navigation" style={{
         position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
         width: "100%", maxWidth: 480,
         background: th.surface + "F0",
@@ -1747,7 +1663,7 @@ export default function AuroreApp() {
         {nav.map(n => {
           const active = page === n.id;
           return (
-            <button key={n.id} onClick={() => setPage(n.id)} style={{
+            <button key={n.id} onClick={() => setPage(n.id)} aria-current={active ? "page" : undefined} style={{
               background: "none", border: "none", cursor: "pointer",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
               padding: "4px 6px", color: active ? th.accent : th.muted,
@@ -1768,7 +1684,7 @@ export default function AuroreApp() {
             </button>
           );
         })}
-      </div>
+      </nav>
     </div>
   );
 }
