@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import Landing from "./Landing.jsx";
 
 // Leaflet map UI is code-split into ./maps.jsx and loaded on demand, so the
 // map library stays out of the initial bundle.
@@ -553,7 +554,7 @@ function LockScreen({ onUnlock, error, th, t }) {
 
 // ─── HOME PAGE ───────────────────────────────────────────────────────────────
 
-function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood, onNewEntry }) {
+function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood, onNewEntry, onExitToLanding }) {
   const today = todayStr();
   const quoteList = QUOTES[lang] || QUOTES.fr;
   const quote = quoteList[new Date().getDate() % quoteList.length];
@@ -573,9 +574,10 @@ function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood
           <p style={{ color: th.muted, fontSize: 10, letterSpacing: 3, margin: "0 0 3px" }}>
             {headerWeekday} · {new Date().getDate()} {MONTHS[new Date().getMonth()].toUpperCase()}
           </p>
-          <h1 style={{ color: th.accent, fontFamily: HEAD_FONT, fontSize: 26, fontWeight: 700, letterSpacing: 3, margin: 0 }}>
-            AURORE
-          </h1>
+          <button onClick={onExitToLanding} aria-label="Retour à l'accueil du site" style={{
+            background: "none", border: "none", padding: 0, cursor: "pointer", display: "block",
+            color: th.accent, fontFamily: HEAD_FONT, fontSize: 26, fontWeight: 700, letterSpacing: 3,
+          }}>AURORE</button>
           <p style={{ color: th.muted, fontSize: 9, letterSpacing: 5, margin: "2px 0 0" }}>{t("club")}</p>
         </div>
         <button onClick={onNewEntry} aria-label={t("new_moment")} style={{
@@ -1499,6 +1501,7 @@ function SettingsPage({
 
 export default function AuroreApp() {
   const [splash, setSplash] = useState(true);
+  const [view, setView] = usePersistentState("view", "landing");
   const [page, setPage] = useState("home");
   const [lang, setLang] = usePersistentState("lang", "fr");
   const [themeIdx, setThemeIdx] = usePersistentState("themeIdx", 4);
@@ -1582,6 +1585,18 @@ export default function AuroreApp() {
     );
   }
 
+  if (view === "landing") {
+    return (
+      <div style={{ background: th.bg, minHeight: "100vh", fontFamily: ff, color: th.text, position: "relative" }}>
+        <style>{baseStyles}</style>
+        <SunsetGlow th={th} />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <Landing th={th} ff={ff} onEnterApp={() => setView("app")} />
+        </div>
+      </div>
+    );
+  }
+
   if (locked && pin) {
     return (
       <div style={{ background: th.bg, fontFamily: ff }}>
@@ -1616,6 +1631,7 @@ export default function AuroreApp() {
               entries={entries} tasks={tasks} th={th} ff={ff} lang={lang} t={t}
               currentMood={currentMood} setCurrentMood={setCurrentMood}
               onNewEntry={() => { setShowNew(true); setPage("journal"); }}
+              onExitToLanding={() => setView("landing")}
             />
           )}
           {page === "journal" && (
