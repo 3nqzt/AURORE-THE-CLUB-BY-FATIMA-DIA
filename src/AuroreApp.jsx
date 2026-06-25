@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import Landing from "./Landing.jsx";
 
 // Leaflet map UI is code-split into ./maps.jsx and loaded on demand, so the
 // map library stays out of the initial bundle.
@@ -553,7 +554,7 @@ function LockScreen({ onUnlock, error, th, t }) {
 
 // ─── HOME PAGE ───────────────────────────────────────────────────────────────
 
-function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood, onNewEntry }) {
+function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood, onNewEntry, onExitToLanding }) {
   const today = todayStr();
   const quoteList = QUOTES[lang] || QUOTES.fr;
   const quote = quoteList[new Date().getDate() % quoteList.length];
@@ -573,9 +574,10 @@ function HomePage({ entries, tasks, th, ff, lang, t, currentMood, setCurrentMood
           <p style={{ color: th.muted, fontSize: 10, letterSpacing: 3, margin: "0 0 3px" }}>
             {headerWeekday} · {new Date().getDate()} {MONTHS[new Date().getMonth()].toUpperCase()}
           </p>
-          <h1 style={{ color: th.accent, fontFamily: HEAD_FONT, fontSize: 26, fontWeight: 700, letterSpacing: 3, margin: 0 }}>
-            AURORE
-          </h1>
+          <button onClick={onExitToLanding} aria-label="Retour à l'accueil du site" style={{
+            background: "none", border: "none", padding: 0, cursor: "pointer", display: "block",
+            color: th.accent, fontFamily: HEAD_FONT, fontSize: 26, fontWeight: 700, letterSpacing: 3,
+          }}>AURORE</button>
           <p style={{ color: th.muted, fontSize: 9, letterSpacing: 5, margin: "2px 0 0" }}>{t("club")}</p>
         </div>
         <button onClick={onNewEntry} aria-label={t("new_moment")} style={{
@@ -1128,18 +1130,13 @@ function PolaroidPage({ entries, th, ff, lang, t }) {
           const m = getMood(e.mood);
           const angle = angles[i % angles.length];
           return (
-            <div key={e.id} style={{
+            <div key={e.id} className="aurore-polaroid" style={{
               breakInside: "avoid", marginBottom: 14,
               background: "#FAF5EF", borderRadius: 3,
               padding: "10px 10px 30px",
               transform: `rotate(${angle}deg)`,
               boxShadow: "0 6px 28px rgba(0,0,0,0.65)",
-              transition: "transform 0.25s ease, box-shadow 0.25s ease",
-              cursor: "pointer",
-            }}
-            onMouseEnter={ev => { ev.currentTarget.style.transform = `rotate(0deg) scale(1.04)`; ev.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.8)"; }}
-            onMouseLeave={ev => { ev.currentTarget.style.transform = `rotate(${angle}deg)`; ev.currentTarget.style.boxShadow = "0 6px 28px rgba(0,0,0,0.65)"; }}
-            >
+            }}>
               {e.photo ? (
                 <img src={e.photo} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: 130, objectFit: "cover", borderRadius: 2, marginBottom: 9, display: "block" }} />
               ) : (
@@ -1504,6 +1501,7 @@ function SettingsPage({
 
 export default function AuroreApp() {
   const [splash, setSplash] = useState(true);
+  const [view, setView] = usePersistentState("view", "landing");
   const [page, setPage] = useState("home");
   const [lang, setLang] = usePersistentState("lang", "fr");
   const [themeIdx, setThemeIdx] = usePersistentState("themeIdx", 4);
@@ -1543,8 +1541,9 @@ export default function AuroreApp() {
     if (Notification.permission !== "granted") return;
 
     let timer;
+    const body = (STRINGS[lang] && STRINGS[lang].reminder_body) || STRINGS.fr.reminder_body;
     const fire = () => {
-      try { new Notification("AURORE — The Club", { body: t("reminder_body") || t("reminder_label") }); } catch { /* noop */ }
+      try { new Notification("AURORE — The Club", { body }); } catch { /* noop */ }
     };
     const scheduleDaily = () => {
       const now = new Date();
@@ -1572,6 +1571,8 @@ export default function AuroreApp() {
     ::-webkit-scrollbar{width:0;background:transparent}
     :focus:not(:focus-visible){outline:none}
     :focus-visible{outline:2px solid ${th.accent};outline-offset:2px;border-radius:6px}
+    .aurore-polaroid{transition:transform .25s ease, box-shadow .25s ease;cursor:pointer}
+    .aurore-polaroid:hover{transform:rotate(0deg) scale(1.04)!important;box-shadow:0 12px 40px rgba(0,0,0,.8)!important;position:relative;z-index:2}
     @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
   `;
 
@@ -1580,6 +1581,18 @@ export default function AuroreApp() {
       <div style={{ background: th.bg, minHeight: "100vh", fontFamily: ff }}>
         <style>{baseStyles}</style>
         <SplashScreen th={th} t={t} />
+      </div>
+    );
+  }
+
+  if (view === "landing") {
+    return (
+      <div style={{ background: th.bg, minHeight: "100vh", fontFamily: ff, color: th.text, position: "relative" }}>
+        <style>{baseStyles}</style>
+        <SunsetGlow th={th} />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <Landing th={th} ff={ff} onEnterApp={() => setView("app")} />
+        </div>
       </div>
     );
   }
@@ -1618,6 +1631,7 @@ export default function AuroreApp() {
               entries={entries} tasks={tasks} th={th} ff={ff} lang={lang} t={t}
               currentMood={currentMood} setCurrentMood={setCurrentMood}
               onNewEntry={() => { setShowNew(true); setPage("journal"); }}
+              onExitToLanding={() => setView("landing")}
             />
           )}
           {page === "journal" && (

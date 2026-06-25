@@ -69,7 +69,9 @@ export function MapPage({ entries, th, ff, lang, t, getMood, formatDate }) {
     }).addTo(map);
 
     // Oldest → newest, so the connecting line traces the journey in order.
-    const sorted = [...placed].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    const sorted = entries
+      .filter(e => e.place && e.place.lat != null)
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
     const latlngs = [];
     sorted.forEach(e => {
       const m = getMood(e.mood);
