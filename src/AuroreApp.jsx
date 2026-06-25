@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import Landing from "./Landing.jsx";
+import Onboarding from "./Onboarding.jsx";
+import ShareCardModal from "./ShareCard.jsx";
 
 // Leaflet map UI is code-split into ./maps.jsx and loaded on demand, so the
 // map library stays out of the initial bundle.
@@ -165,10 +167,23 @@ const STRINGS = {
     pin_placeholder: "Code PIN (min. 4 chiffres)",
     pin_confirm: "Confirmer le code",
     lock_now: "🔒 Verrouiller l'application maintenant",
-    export_label: "Exporter mes données",
-    export_json: "📦 Exporter en JSON",
+    export_label: "Sauvegarde & restauration",
+    export_json: "📦 Exporter (JSON)",
+    import_json: "↺ Importer un fichier",
+    import_confirm: "Remplacer tes données actuelles par le contenu du fichier ? Cette action est irréversible.",
+    import_invalid: "Fichier invalide. Choisis un export AURORE (.json).",
+    backup_hint: "Astuce : exporte un fichier de sauvegarde, garde-le en lieu sûr, puis réimporte-le sur un autre appareil.",
     export_journal_header: "AURORE THE CLUB — Mon Journal",
     project_credit: "Projet de Marketing Digital",
+
+    onb_skip: "Passer", onb_next: "Suivant", onb_start: "Commencer",
+    onb1_t: "Bienvenue dans ton espace", onb1_d: "Ton journal intime, tes humeurs et tes intentions — un lieu rien qu'à toi.",
+    onb2_t: "Capture chaque moment", onb2_d: "Note ton humeur, ajoute une photo, un lieu et des émojis. Tout reste sur ton appareil.",
+    onb3_t: "Visualise ton parcours", onb3_d: "Calendrier des humeurs, mur de souvenirs et carte de tes moments à Dakar.",
+    onb4_t: "Protège & sauvegarde", onb4_d: "Verrouille avec un code PIN, puis exporte ou importe tes données quand tu veux.",
+
+    share_btn: "Partager", download_btn: "Télécharger", share_title: "Carte à partager",
+    share_caption: "Mon moment Aurore 🌅 @auroretheclub",
 
     theme_0: "Aurore", theme_1: "Crépuscule", theme_2: "Sahara", theme_3: "Lagon", theme_4: "Plein jour",
   },
@@ -710,6 +725,9 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
   const [searchDate, setSearchDate] = useState("");
   const [searchText, setSearchText] = useState("");
 
+  // Entry selected for an Instagram share card
+  const [shareEntry, setShareEntry] = useState(null);
+
   const toggleEmoji = (e) => {
     setSelEmojis(prev => prev.includes(e) ? prev.filter(x => x !== e) : prev.length < 5 ? [...prev, e] : prev);
   };
@@ -998,6 +1016,9 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
               <span style={{ fontSize: 18 }}>{m.e}</span>
               <span style={{ color: m.c, fontSize: 11, fontWeight: 600 }}>{t(`mood_${e.mood}`)}</span>
               <span style={{ color: th.muted, fontSize: 11, marginLeft: "auto" }}>{e.time}</span>
+              <button onClick={() => setShareEntry(e)} aria-label={t("share_btn")} title={t("share_btn")} style={{
+                background: "none", border: "none", color: th.muted, fontSize: 15, cursor: "pointer", padding: "0 0 0 6px", lineHeight: 1,
+              }}>⤴</button>
             </div>
             {e.photo && (
               <img src={e.photo} alt="" loading="lazy" decoding="async" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />
@@ -1008,6 +1029,14 @@ function JournalPage({ entries, setEntries, th, ff, lang, t, showNew, setShowNew
           </Card>,
         ].filter(Boolean);
       }, [])}
+
+      {shareEntry && (
+        <ShareCardModal
+          entry={shareEntry} th={th} lang={lang} t={t}
+          getMood={getMood} formatDate={formatDate}
+          onClose={() => setShareEntry(null)}
+        />
+      )}
     </div>
   );
 }
@@ -1301,12 +1330,13 @@ function TasksPage({ tasks, setTasks, th, ff, t }) {
 
 function SettingsPage({
   th, t, lang, setLang, themeIdx, setThemeIdx, fontIdx, setFontIdx,
-  entries, tasks, setLocked, pin, setPin,
+  entries, tasks, setEntries, setTasks, setLocked, pin, setPin,
   reminderEnabled, setReminderEnabled, reminderMode, setReminderMode, reminderTime, setReminderTime,
 }) {
   const [pinInput, setPinInput] = useState("");
   const [showPinForm, setShowPinForm] = useState(false);
   const [flash, setFlash] = useState(false);
+  const importRef = useRef(null);
   const notifSupported = typeof window !== "undefined" && "Notification" in window;
   const [notifPerm, setNotifPerm] = useState(notifSupported ? Notification.permission : "unsupported");
 
@@ -1327,6 +1357,25 @@ function SettingsPage({
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = "aurore-data.json"; a.click();
+  };
+  const importJSON = async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      const hasEntries = Array.isArray(data.entries);
+      const hasTasks = Array.isArray(data.tasks);
+      if (!hasEntries && !hasTasks) { window.alert(t("import_invalid")); return; }
+      if (!window.confirm(t("import_confirm"))) return;
+      if (hasEntries) setEntries(data.entries);
+      if (hasTasks) setTasks(data.tasks);
+      if (data.lang) setLang(data.lang);
+      showSaved();
+    } catch {
+      window.alert(t("import_invalid"));
+    } finally {
+      if (importRef.current) importRef.current.value = "";
+    }
   };
 
   return (
@@ -1476,14 +1525,20 @@ function SettingsPage({
         )}
       </Card>
 
-      {/* Export */}
+      {/* Backup & restore */}
       <Label th={th}>{t("export_label")}</Label>
-      <div style={{ display: "flex", gap: 10, marginBottom: 40 }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
         <button onClick={exportJSON} style={{
           flex: 1, background: th.surface, border: `1px solid ${th.border}`,
           borderRadius: 12, padding: "13px", color: th.text, fontSize: 13, cursor: "pointer",
         }}>{t("export_json")}</button>
+        <button onClick={() => importRef.current?.click()} style={{
+          flex: 1, background: th.surface, border: `1px solid ${th.border}`,
+          borderRadius: 12, padding: "13px", color: th.text, fontSize: 13, cursor: "pointer",
+        }}>{t("import_json")}</button>
       </div>
+      <input ref={importRef} type="file" accept="application/json,.json" onChange={importJSON} style={{ display: "none" }} />
+      <p style={{ color: th.faint, fontSize: 11, lineHeight: 1.6, margin: "0 0 40px" }}>{t("backup_hint")}</p>
 
       {/* Branding */}
       <div style={{ textAlign: "center", paddingTop: 10 }}>
@@ -1509,6 +1564,7 @@ export default function AuroreApp() {
   const [entries, setEntries] = usePersistentState("entries", SAMPLE_ENTRIES);
   const [tasks, setTasks] = usePersistentState("tasks", SAMPLE_TASKS);
   const [currentMood, setCurrentMood] = usePersistentState("currentMood", 4);
+  const [onboarded, setOnboarded] = usePersistentState("onboarded", false);
   const [showNew, setShowNew] = useState(false);
   const [pin, setPin] = usePersistentState("pin", "");
   // If a PIN was set in a previous session, open the app locked.
@@ -1609,6 +1665,16 @@ export default function AuroreApp() {
     );
   }
 
+  // First run inside the member space: a short welcome tour.
+  if (!onboarded) {
+    return (
+      <div style={{ background: th.bg, minHeight: "100vh" }}>
+        <style>{baseStyles}</style>
+        <Onboarding th={th} ff={ff} t={t} onDone={() => setOnboarded(true)} />
+      </div>
+    );
+  }
+
   const nav = [
     { id: "home",     icon: "☀️", label: t("nav_home")     },
     { id: "journal",  icon: "📖", label: t("nav_journal")  },
@@ -1653,7 +1719,7 @@ export default function AuroreApp() {
               th={th} t={t} lang={lang} setLang={setLang}
               themeIdx={themeIdx} setThemeIdx={setThemeIdx}
               fontIdx={fontIdx} setFontIdx={setFontIdx}
-              entries={entries} tasks={tasks}
+              entries={entries} tasks={tasks} setEntries={setEntries} setTasks={setTasks}
               setLocked={setLocked} pin={pin} setPin={setPin}
               reminderEnabled={reminderEnabled} setReminderEnabled={setReminderEnabled}
               reminderMode={reminderMode} setReminderMode={setReminderMode}
