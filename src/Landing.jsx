@@ -4,20 +4,22 @@ import { useState, useRef } from "react";
 // AURORE — public landing site (the "front door").
 // Two journeys: members (Join) and partners (Partner). Sits in front of the
 // member journaling app, reachable via "Mon espace".
-//
-// ⚠️ EDIT ME: the values below are placeholders — replace with the real
-// WhatsApp number, Instagram handle, email, photos/videos, stats, partnership
-// tiers and testimonials. Search for "EDIT" in this file.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const HEAD_FONT = "'Fraunces', Georgia, serif";
 
 const CLUB = {
-  whatsapp: "221700000000",            // EDIT: WhatsApp number, international format, no "+"
-  instagram: "auroretheclub",          // EDIT: Instagram handle (without @)
-  email: "hello@auroretheclub.com",    // EDIT: contact email
+  whatsapp: "33632937250",                 // +33 6 32 93 72 50
+  instagram: "auroretheclub",
+  email: "fatisbusiness@gmail.com",
   city: "Dakar, Sénégal",
 };
+
+// Public assets resolve against Vite's base path (works on GitHub Pages too).
+// 📸 Drop the two photos in  public/locations/  with these exact names and they
+// appear automatically; until then a sunset gradient is shown as fallback.
+const ASSET = (p) => `${import.meta.env.BASE_URL}${p}`;
+const onImgError = (e) => { e.currentTarget.style.display = "none"; };
 
 const PILLARS = [
   { icon: "🧘🏾", title: "Discipline",  desc: "Routines, objectifs et responsabilité entre pairs." },
@@ -25,33 +27,16 @@ const PILLARS = [
   { icon: "🌿", title: "Bien-être",   desc: "Sport, méditation et nature, au bord de l'océan." },
 ];
 
-// EDIT: swap `grad` for real photo/video URLs (image: "/locations/xxx.jpg").
 const LOCATIONS = [
-  { name: "Toit-terrasse · Plateau",   vibe: "Sessions au lever du soleil, face à la ville qui s'éveille.", grad: ["#E0764A", "#F2B488"] },
-  { name: "Plage des Almadies",        vibe: "Sport, respiration et cercles de parole, les pieds dans le sable.", grad: ["#2E9BB5", "#86D2E0"] },
-  { name: "Jardin secret · Ngor",      vibe: "Ateliers créatifs à l'ombre : carnets, aquarelles et musique.", grad: ["#D9A441", "#F0CE84"] },
-  { name: "Corniche Ouest",            vibe: "Marches au coucher du soleil et journaling face à l'Atlantique.", grad: ["#CE6F94", "#EBAAC6"] },
+  { name: "Toit-terrasse · vue océan",          vibe: "Sessions au lever et au coucher du soleil, face à l'Atlantique.", grad: ["#E0764A", "#F2B488"], image: ASSET("locations/rooftop.jpg") },
+  { name: "Coucher de soleil sur la Corniche",  vibe: "Sport, marche et journaling au bord de l'eau, à l'heure dorée.",  grad: ["#CE6F94", "#EBAAC6"], image: ASSET("locations/ocean.jpg") },
 ];
 
-// EDIT: real numbers.
-const STATS = [
-  { value: "150+", label: "membres actifs" },
-  { value: "85%",  label: "actifs chaque semaine" },
-  { value: "×3",   label: "croissance en 6 mois" },
-  { value: "5k+",  label: "communauté Instagram" },
-];
-
-// EDIT: real partnership tiers.
-const TIERS = [
-  { name: "Découverte", featured: false, perks: ["Présence sur un évènement", "Mention sur Instagram", "Accès à la communauté"] },
-  { name: "Engagé",     featured: true,  perks: ["Une activité co-brandée / mois", "Stories + post dédiés", "Logo sur le site & supports", "Bilan d'audience trimestriel"] },
-  { name: "Signature",  featured: false, perks: ["Série d'évènements signature", "Campagne sur-mesure", "Ambassadeurs membres", "Reporting d'impact complet"] },
-];
-
-// EDIT: real testimonials.
-const TESTIMONIALS = [
-  { name: "Awa, 22 ans",    text: "Aurore m'a donné une discipline que le coaching classique ne m'avait jamais apportée — et des ami·e·s pour la vie." },
-  { name: "Cheikh, 25 ans", text: "On apprend en faisant, ensemble, dans des endroits magnifiques. C'est devenu mon rendez-vous de la semaine." },
+const PARTNER_POINTS = [
+  { icon: "🌍", title: "Audience jeune & engagée", desc: "La jeunesse de Dakar, réunie autour du développement personnel." },
+  { icon: "📍", title: "Présence sur le terrain",  desc: "Votre marque associée à des expériences réelles, pas juste un post." },
+  { icon: "📸", title: "Contenu authentique",      desc: "Photos & vidéos dans des lieux iconiques, relayés sur Instagram." },
+  { icon: "🤝", title: "Collaborations sur-mesure", desc: "On construit le format ensemble, selon vos objectifs." },
 ];
 
 const waLink = (msg) => `https://wa.me/${CLUB.whatsapp}?text=${encodeURIComponent(msg)}`;
@@ -172,26 +157,32 @@ export default function Landing({ th, ff, onEnterApp }) {
       <Section alt id="lieux">
         <Kicker>Les lieux</Kicker>
         <H>Dakar comme tu ne l'as jamais vécue.</H>
-        {/* EDIT: replace the gradient with a real photo/video for each location */}
         <div style={{
-          height: 220, borderRadius: 18, overflow: "hidden", position: "relative",
+          height: 240, borderRadius: 18, overflow: "hidden", position: "relative",
           background: `linear-gradient(135deg, ${active.grad[0]}, ${active.grad[1]})`,
           display: "flex", alignItems: "flex-end", marginBottom: 12,
           boxShadow: "0 10px 40px rgba(0,0,0,0.35)",
         }}>
-          <div style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.55))", padding: "30px 18px 16px", width: "100%" }}>
+          {active.image && (
+            <img src={active.image} alt={active.name} onError={onImgError} style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
+            }} />
+          )}
+          <div style={{ position: "relative", background: "linear-gradient(transparent, rgba(0,0,0,0.6))", padding: "40px 18px 16px", width: "100%" }}>
             <p style={{ color: "#fff", fontFamily: HEAD_FONT, fontSize: 20, fontWeight: 600, margin: "0 0 4px" }}>{active.name}</p>
-            <p style={{ color: "#fff", opacity: 0.9, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{active.vibe}</p>
+            <p style={{ color: "#fff", opacity: 0.92, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{active.vibe}</p>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
           {LOCATIONS.map((l, i) => (
             <button key={l.name} onClick={() => setLoc(i)} aria-label={l.name} aria-pressed={loc === i} style={{
-              flexShrink: 0, width: 64, height: 48, borderRadius: 10, cursor: "pointer",
+              flexShrink: 0, width: 72, height: 52, borderRadius: 10, cursor: "pointer", overflow: "hidden", padding: 0,
               background: `linear-gradient(135deg, ${l.grad[0]}, ${l.grad[1]})`,
               border: `2px solid ${loc === i ? th.accent : "transparent"}`,
               opacity: loc === i ? 1 : 0.7,
-            }} />
+            }}>
+              {l.image && <img src={l.image} alt="" onError={onImgError} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+            </button>
           ))}
         </div>
       </Section>
@@ -202,17 +193,9 @@ export default function Landing({ th, ff, onEnterApp }) {
         <H>Rejoins l'aventure.</H>
         <p style={{ color: th.muted, fontSize: 14, lineHeight: 1.7, margin: "0 0 18px" }}>
           Quelques semaines intensives pour transformer tes habitudes, entouré·e d'une communauté qui te tire vers le haut.
+          Écris-nous sur WhatsApp ou Instagram — on te dit tout.
         </p>
-        {TESTIMONIALS.map(tm => (
-          <div key={tm.name} style={{
-            background: th.surface, border: `1px solid ${th.border}`, borderLeft: `3px solid ${th.accent}`,
-            borderRadius: 12, padding: 16, marginBottom: 10,
-          }}>
-            <p style={{ color: th.text, fontSize: 14, fontStyle: "italic", lineHeight: 1.7, margin: "0 0 8px", fontFamily: HEAD_FONT }}>“{tm.text}”</p>
-            <p style={{ color: th.muted, fontSize: 12, margin: 0 }}>— {tm.name}</p>
-          </div>
-        ))}
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <a href={waLink("Bonjour Aurore ! Je souhaite rejoindre la communauté 🌅")} target="_blank" rel="noopener noreferrer" style={{
             background: `linear-gradient(135deg, ${th.accentSoft}, ${th.accent})`, color: "#1A1207",
             borderRadius: 14, padding: "13px 20px", fontSize: 14, fontWeight: 700, textDecoration: "none",
@@ -228,30 +211,20 @@ export default function Landing({ th, ff, onEnterApp }) {
       <Section alt id="partner">
         <Kicker>Pour les partenaires</Kicker>
         <H>Touchez la jeunesse de Dakar.</H>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
-          {STATS.map(s => (
-            <div key={s.label} style={{ background: th.bg, border: `1px solid ${th.border}`, borderRadius: 14, padding: 16, textAlign: "center" }}>
-              <p style={{ color: th.accent, fontSize: 26, fontWeight: 700, margin: "0 0 2px", fontFamily: HEAD_FONT }}>{s.value}</p>
-              <p style={{ color: th.muted, fontSize: 11, margin: 0 }}>{s.label}</p>
-            </div>
-          ))}
-        </div>
-        <p style={{ color: th.faint, fontSize: 11, margin: "-12px 0 22px", textAlign: "center" }}>
-          *Chiffres indicatifs — à remplacer. Données d'audience agrégées et anonymes.
+        <p style={{ color: th.muted, fontSize: 14, lineHeight: 1.7, margin: "0 0 20px" }}>
+          Associez votre marque à une communauté authentique et à des expériences mémorables.
         </p>
-        <div style={{ display: "grid", gap: 10, marginBottom: 20 }}>
-          {TIERS.map(t => (
-            <div key={t.name} style={{
-              background: t.featured ? th.accent + "14" : th.bg,
-              border: `1px solid ${t.featured ? th.accent : th.border}`, borderRadius: 16, padding: 18,
+        <div style={{ display: "grid", gap: 10, marginBottom: 22 }}>
+          {PARTNER_POINTS.map(p => (
+            <div key={p.title} style={{
+              display: "flex", gap: 14, alignItems: "flex-start",
+              background: th.bg, border: `1px solid ${th.border}`, borderRadius: 14, padding: 16,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <p style={{ color: th.text, fontSize: 16, fontWeight: 700, margin: 0, fontFamily: HEAD_FONT }}>{t.name}</p>
-                {t.featured && <span style={{ background: th.accent, color: "#1A1207", fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>POPULAIRE</span>}
+              <span style={{ fontSize: 24 }}>{p.icon}</span>
+              <div>
+                <p style={{ color: th.text, fontSize: 15, fontWeight: 600, margin: "0 0 3px" }}>{p.title}</p>
+                <p style={{ color: th.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{p.desc}</p>
               </div>
-              {t.perks.map(p => (
-                <p key={p} style={{ color: th.muted, fontSize: 13, lineHeight: 1.7, margin: 0 }}>✦ {p}</p>
-              ))}
             </div>
           ))}
         </div>
