@@ -282,10 +282,24 @@ const STRINGS = {
     pin_placeholder: "Codd PIN (4 sifr ci suuf)",
     pin_confirm: "Wooral code bi",
     lock_now: "🔒 Tëj app bi journal",
-    export_label: "Génne sama xibaar",
-    export_json: "📦 Génne ci JSON",
+    export_label: "Denc ak delloo",
+    export_json: "📦 Génne (JSON)",
+    import_json: "↺ Dugal benn fiise",
+    import_confirm: "Wuutal say xibaar yu am léegi ak yu fiise bi ? Loolu mënul delloo.",
+    import_invalid: "Fiise bi baaxul. Tànnal benn génn AURORE (.json).",
+    backup_hint: "Xelaal : génne benn fiisu denc, denc ko ci bérab bu wóor, te dugalaat ko ci beneen telefon.",
     export_journal_header: "AURORE THE CLUB — Sama joural",
     project_credit: "Liggéeyu Marketing Digital",
+
+    // Wolof — brouillon à relire / corriger (onboarding & partage)
+    onb_skip: "Génn", onb_next: "Topp", onb_start: "Tàmbali",
+    onb1_t: "Dalal ak jàmm ci sa bérab", onb1_d: "Sa téere bu sutura, say xol ak say yéene — benn bérab bu yaw rekk moom.",
+    onb2_t: "Denc saa yu nekk", onb2_d: "Bindal sa xol, yokk nataal, bérab ak émojis. Lépp di des ci sa telefon.",
+    onb3_t: "Gis sa yoon", onb3_d: "Arminaatu say xol, miiru fàttaliku ak kàrtu say saa ci Ndakaaru.",
+    onb4_t: "Aar ak denc", onb4_d: "Tëjal ak code PIN, te génne walla dugal say xibaar saa su la neexee.",
+
+    share_btn: "Séddu", download_btn: "Yébbal", share_title: "Nataal bu ñuy séddu",
+    share_caption: "Sama saa Aurore 🌅 @auroretheclub",
 
     theme_0: "Njël", theme_1: "Timis", theme_2: "Sahara", theme_3: "Géej", theme_4: "Bëccëg",
   },
