@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AURORE — public landing site (the "front door").
@@ -44,7 +44,27 @@ const scrollToId = (id) => document.getElementById(id)?.scrollIntoView({ behavio
 
 export default function Landing({ th, ff, onEnterApp }) {
   const [loc, setLoc] = useState(0);
+  const [installEvt, setInstallEvt] = useState(null);
   const wrap = useRef(null);
+
+  // Capture the install prompt so we can offer an "Installer l'app" button.
+  useEffect(() => {
+    const onPrompt = (e) => { e.preventDefault(); setInstallEvt(e); };
+    const onInstalled = () => setInstallEvt(null);
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  const install = async () => {
+    if (!installEvt) return;
+    installEvt.prompt();
+    await installEvt.userChoice;
+    setInstallEvt(null);
+  };
 
   const Section = ({ id, alt, children, style }) => (
     <section id={id} style={{
@@ -77,10 +97,18 @@ export default function Landing({ th, ff, onEnterApp }) {
           <span style={{ color: th.accent, fontFamily: HEAD_FONT, fontSize: 20, letterSpacing: 3, fontWeight: 600 }}>AURORE</span>
           <span style={{ color: th.muted, fontSize: 8, letterSpacing: 4, marginLeft: 8 }}>THE CLUB</span>
         </div>
-        <button onClick={onEnterApp} style={{
-          background: "transparent", border: `1px solid ${th.border}`, color: th.text,
-          borderRadius: 20, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: ff,
-        }}>Mon espace →</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          {installEvt && (
+            <button onClick={install} style={{
+              background: `linear-gradient(135deg, ${th.accentSoft}, ${th.accent})`, border: "none", color: "#1A1207",
+              borderRadius: 20, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: ff,
+            }}>Installer l'app</button>
+          )}
+          <button onClick={onEnterApp} style={{
+            background: "transparent", border: `1px solid ${th.border}`, color: th.text,
+            borderRadius: 20, padding: "8px 14px", fontSize: 12, cursor: "pointer", fontFamily: ff,
+          }}>Mon espace →</button>
+        </div>
       </header>
 
       {/* Hero */}

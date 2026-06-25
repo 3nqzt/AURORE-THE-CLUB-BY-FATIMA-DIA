@@ -8,6 +8,24 @@ export default [
   { ignores: ["dist/", "node_modules/"] },
   js.configs.recommended,
   {
+    // Node-side scripts (icon generator, configs) — Node globals, not browser.
+    files: ["scripts/**/*.{js,mjs}", "*.config.{js,mjs}"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: { ...globals.node },
+    },
+  },
+  {
+    // Service worker — ServiceWorkerGlobalScope (self, caches, clients, fetch…).
+    files: ["public/sw.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: { ...globals.serviceworker },
+    },
+  },
+  {
     files: ["src/**/*.{js,jsx}"],
     languageOptions: {
       ecmaVersion: 2022,
