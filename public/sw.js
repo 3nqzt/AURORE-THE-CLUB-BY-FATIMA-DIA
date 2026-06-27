@@ -4,7 +4,7 @@
 //   • same-origin assets (hashed JS/CSS/images/fonts) → cache-first, then network.
 //   • cross-origin (Google Fonts, map tiles) → left to the network.
 // Bump CACHE to force a refresh of cached assets on a new release.
-const CACHE = "aurore-v1";
+const CACHE = "aurore-v2";
 const SHELL = ["./", "./index.html"];
 
 self.addEventListener("install", (event) => {
