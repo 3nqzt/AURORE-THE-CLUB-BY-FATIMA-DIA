@@ -39,6 +39,23 @@ const PARTNER_POINTS = [
   { icon: "🤝", title: "Collaborations sur-mesure", desc: "On construit le format ensemble, selon vos objectifs." },
 ];
 
+// Premiers chiffres de la communauté (taux d'engagement = interactions / vues).
+const STATS = [
+  { value: "507", label: "vues" },
+  { value: "33", label: "interactions" },
+  { value: "6,5 %", label: "engagement" },
+];
+
+const TESTIMONIALS = [
+  { t: "Écouter l'intérieur des gens pour essayer de proposer des solutions à travers l'art et la beauté de la capitale sénégalaise, c'est super !", a: "MD" },
+  { t: "Les couleurs sont superrrrrr cozy.", a: "NNN" },
+  { t: "Je trouve que c'est très bien fait ma shaa Allah. Et puis le projet est original.", a: "FBN" },
+  { t: "C'est vraiment stylé, l'idée est parfaite, le site est moderne.", a: "POD" },
+  { t: "Déjà l'idée est excellente… Life is getting harder and harder… et il y a plein de gens qui ont besoin de ce genre d'outils. Ensuite le site il est clean, bien organisé… un bon mix entre professional & casual. It's giving a vibe of drinking cocktails en face de la mer + sunset. The agenda is also very nice with very useful features.", a: "PLOS" },
+  { t: "La plateforme est très très bien. J'aime beaucoup le concept ! À défaut d'aller chez le psy ça aide vraiment. And I really like the colors.", a: "SM" },
+  { t: "C'est vraiment très très bien fait ! J'aime bien la diversité des thèmes/couleurs, la précision de la carte ainsi que les différentes photos mettant en avant Dakar.", a: "RM" },
+];
+
 const waLink = (msg) => `https://wa.me/${CLUB.whatsapp}?text=${encodeURIComponent(msg)}`;
 const scrollToId = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -215,6 +232,25 @@ export default function Landing({ th, ff, onEnterApp }) {
         </div>
       </Section>
 
+      {/* Testimonials */}
+      <Section id="temoignages">
+        <Kicker>Ils en parlent</Kicker>
+        <H>Ce que la communauté en dit.</H>
+        <div style={{ display: "grid", gap: 10 }}>
+          {TESTIMONIALS.map((tm, i) => (
+            <figure key={i} style={{
+              margin: 0, background: th.surface, border: `1px solid ${th.border}`,
+              borderLeft: `3px solid ${th.accent}`, borderRadius: 14, padding: "16px 18px",
+            }}>
+              <blockquote style={{ margin: 0, color: th.text, fontSize: 14, lineHeight: 1.7, fontFamily: HEAD_FONT, fontStyle: "italic" }}>
+                “{tm.t}”
+              </blockquote>
+              <figcaption style={{ marginTop: 10, color: th.accent, fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>— {tm.a}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </Section>
+
       {/* Member journey */}
       <Section id="join">
         <Kicker>Pour les membres</Kicker>
@@ -239,9 +275,18 @@ export default function Landing({ th, ff, onEnterApp }) {
       <Section alt id="partner">
         <Kicker>Pour les partenaires</Kicker>
         <H>Touchez la jeunesse de Dakar.</H>
-        <p style={{ color: th.muted, fontSize: 14, lineHeight: 1.7, margin: "0 0 20px" }}>
+        <p style={{ color: th.muted, fontSize: 14, lineHeight: 1.7, margin: "0 0 16px" }}>
           Associez votre marque à une communauté authentique et à des expériences mémorables.
         </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 8 }}>
+          {STATS.map(s => (
+            <div key={s.label} style={{ background: th.bg, border: `1px solid ${th.border}`, borderRadius: 14, padding: "16px 6px", textAlign: "center" }}>
+              <p style={{ color: th.accent, fontSize: 26, fontWeight: 700, margin: "0 0 2px", fontFamily: HEAD_FONT }}>{s.value}</p>
+              <p style={{ color: th.muted, fontSize: 10.5, margin: 0 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+        <p style={{ color: th.faint, fontSize: 11, margin: "0 0 22px" }}>Premiers chiffres de la communauté sur Instagram.</p>
         <div style={{ display: "grid", gap: 10, marginBottom: 22 }}>
           {PARTNER_POINTS.map(p => (
             <div key={p.title} style={{
@@ -270,26 +315,43 @@ export default function Landing({ th, ff, onEnterApp }) {
       <footer style={{ padding: "40px 20px 110px", textAlign: "center", borderTop: `1px solid ${th.border}` }}>
         <p style={{ color: th.accent, fontFamily: HEAD_FONT, fontSize: 18, letterSpacing: 4, margin: "0 0 6px" }}>AURORE</p>
         <p style={{ color: th.muted, fontSize: 10, letterSpacing: 3, margin: "0 0 16px" }}>THE CLUB · {CLUB.city}</p>
-        <div style={{ display: "flex", gap: 18, justifyContent: "center", marginBottom: 18 }}>
-          <a href={`https://instagram.com/${CLUB.instagram}`} target="_blank" rel="noopener noreferrer" style={{ color: th.text, fontSize: 13, textDecoration: "none" }}>Instagram</a>
-          <a href={waLink("Bonjour Aurore !")} target="_blank" rel="noopener noreferrer" style={{ color: th.text, fontSize: 13, textDecoration: "none" }}>WhatsApp</a>
+        <div style={{ display: "flex", gap: 22, justifyContent: "center", alignItems: "center", marginBottom: 18 }}>
+          <a href={`https://instagram.com/${CLUB.instagram}`} target="_blank" rel="noopener noreferrer" aria-label="Instagram @auroretheclub" style={{ color: th.text, display: "inline-flex", padding: 4 }}><IGIcon /></a>
+          <a href={waLink("Bonjour Aurore !")} target="_blank" rel="noopener noreferrer" aria-label="Nous écrire sur WhatsApp" style={{ color: th.text, display: "inline-flex", padding: 4 }}><WAIcon /></a>
           <button onClick={onEnterApp} style={{ background: "none", border: "none", color: th.text, fontSize: 13, cursor: "pointer", fontFamily: ff, padding: 0 }}>Mon espace</button>
         </div>
         <p style={{ color: th.faint, fontSize: 11, margin: 0 }}>Projet de Marketing Digital · Fatima Dia</p>
       </footer>
 
-      {/* WhatsApp floating button */}
+      {/* WhatsApp floating button — minimalist icon */}
       <a href={waLink("Bonjour Aurore ! J'aimerais en savoir plus sur le club 🌅")} target="_blank" rel="noopener noreferrer"
         aria-label="Nous écrire sur WhatsApp" style={{
         position: "fixed", right: 16, bottom: 18, zIndex: 40,
-        display: "flex", alignItems: "center", gap: 8,
-        background: "#25D366", color: "#073B22", textDecoration: "none",
-        borderRadius: 30, padding: "12px 16px", fontSize: 13, fontWeight: 700,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        width: 54, height: 54, borderRadius: "50%",
+        background: "#25D366", color: "#fff", textDecoration: "none",
         boxShadow: "0 6px 22px rgba(0,0,0,0.35)",
       }}>
-        <span style={{ fontSize: 18 }}>💬</span> Discuter
+        <WAIcon size={28} color="#fff" />
       </a>
     </div>
+  );
+}
+
+// Brand glyphs (inline SVG) for a minimalist look.
+function WAIcon({ size = 22, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true" focusable="false">
+      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+    </svg>
+  );
+}
+
+function IGIcon({ size = 22, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true" focusable="false">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+    </svg>
   );
 }
 
